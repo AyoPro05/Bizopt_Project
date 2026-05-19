@@ -1,0 +1,519 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ThemeMode {
+  light
+  dark
+  system
+}
+
+enum VariantType {
+  caption
+  carousel_outline
+  image_prompt
+  video_idea
+  audio_idea
+  thread
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  memberships   OrgMember[]
+  auditLogs     AuditLog[]
+  settings      UserSettings?
+  ideaBriefs    IdeaBrief[]
+  editorSessions EditorSession[]
+}
+
+model UserSettings {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  theme          ThemeMode @default(system)
+  themeUpdatedAt DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members          OrgMember[]
+  subscription     Subscription?
+  entitlement      Entitlement?
+  devices          Device[]
+  payments         Payment[]
+  campaigns        Campaign[]
+  socialAccounts   SocialAccount[]
+  platformAccounts PlatformAccount[]
+  assets           Asset[]
+  carouselSlides   CarouselSlide[]
+  aiGenerations    AiGeneration[]
+  scheduledPosts   ScheduledPost[]
+  auditLogs        AuditLog[]
+  changelogEntries ChangelogEntry[]
+  ideaBriefs       IdeaBrief[]
+  contentVariants  ContentVariant[]
+  editorSessions   EditorSession[]
+}
+
+model OrgMember {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+}
+
+model Subscription {
+  id                     String    @id @default(cuid())
+  orgId                  String    @unique
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?   @unique
+  stripePaymentMethodId  String?
+  planId                 String    @default("bizopt_pro_monthly")
+  status                 String    @default("pending_payment")
+  currency               String    @default("usd")
+  amountCents            Int       @default(999)
+  trialPriceCents        Int       @default(99)
+  trialDays              Int       @default(7)
+  trialStartAt           DateTime?
+  trialEndAt             DateTime?
+  requiresPaymentMethod  Boolean   @default(true)
+  trialConvertedAt       DateTime?
+  cancelAtPeriodEnd      Boolean   @default(false)
+  canceledAt             DateTime?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  graceUntil             DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  entitlement Entitlement?
+  payments    Payment[]
+}
+
+model Entitlement {
+  id              String    @id @default(cuid())
+  orgId           String    @unique
+  subscriptionId  String?   @unique
+  active          Boolean   @default(false)
+  deviceLimit     Int       @default(1)
+  accessUntil     DateTime?
+  userFacingState String    @default("pending_payment")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  org          Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+}
+
+model StripeEvent {
+  id               String    @id @default(cuid())
+  eventId          String    @unique
+  type             String
+  livemode         Boolean
+  payloadJson      Json
+  processingStatus String    @default("pending")
+  processedAt      DateTime?
+  errorMessage     String?
+  createdAt        DateTime  @default(now())
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  orgId                 String
+  subscriptionId        String?
+  stripePaymentIntentId String?  @unique
+  stripeInvoiceId       String?
+  amountCents           Int
+  currency              String
+  status                String
+  failureCode           String?
+  failureMessage        String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  org          Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  refunds      Refund[]
+}
+
+model Refund {
+  id             String   @id @default(cuid())
+  paymentId      String
+  stripeRefundId String?  @unique
+  amountCents    Int
+  currency       String
+  status         String   @default("refund_pending")
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id          String    @id @default(cuid())
+  orgId       String
+  fingerprint String
+  label       String?
+  platform    String?
+  lastSeenAt  DateTime  @default(now())
+  boundAt     DateTime  @default(now())
+  revokedAt   DateTime?
+  isPrimary   Boolean   @default(false)
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, fingerprint])
+  @@index([orgId])
+}
+
+model PlatformRegistry {
+  id               String  @id @default(cuid())
+  key              String  @unique
+  displayName      String
+  supportsImage    Boolean @default(true)
+  supportsVideo    Boolean @default(true)
+  supportsCarousel Boolean @default(false)
+  supportsAudio    Boolean @default(false)
+  isEnabled        Boolean @default(true)
+  oauthConfigKey   String?
+  sortOrder        Int     @default(0)
+}
+
+model PlatformAccount {
+  id             String    @id @default(cuid())
+  orgId          String
+  platformKey    String
+  externalId     String
+  displayName    String?
+  accessToken    String?   @db.Text
+  refreshToken   String?   @db.Text
+  tokenExpiresAt DateTime?
+  capabilities   Json?
+  metadata       Json?
+  connectedAt    DateTime  @default(now())
+  disconnectedAt DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, platformKey, externalId])
+  @@index([orgId])
+}
+
+model SocialAccount {
+  id             String    @id @default(cuid())
+  orgId          String
+  platform       String
+  accountId      String
+  accountName    String?
+  accessToken    String?   @db.Text
+  refreshToken   String?   @db.Text
+  tokenExpiresAt DateTime?
+  metadata       Json?
+  connectedAt    DateTime  @default(now())
+  disconnectedAt DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, platform, accountId])
+}
+
+model IdeaBrief {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  prompt    String   @db.Text
+  tone      String?
+  goals     Json?
+  status    String   @default("draft")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org      Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variants ContentVariant[]
+  session  EditorSession?
+
+  @@index([orgId])
+  @@index([userId])
+}
+
+model ContentVariant {
+  id         String      @id @default(cuid())
+  orgId      String
+  briefId    String
+  type       VariantType
+  title      String?
+  body       String      @db.Text
+  metadata   Json?
+  sortOrder  Int         @default(0)
+  isSelected Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  brief IdeaBrief     @relation(fields: [briefId], references: [id], onDelete: Cascade)
+
+  @@index([briefId])
+  @@index([orgId])
+}
+
+model EditorSession {
+  id           String   @id @default(cuid())
+  orgId        String
+  userId       String
+  briefId      String?  @unique
+  campaignId   String?
+  entityType   String
+  snapshotJson Json
+  lastSavedAt  DateTime @default(now())
+  expiresAt    DateTime?
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brief IdeaBrief?    @relation(fields: [briefId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, userId])
+}
+
+model Campaign {
+  id                String    @id @default(cuid())
+  orgId             String
+  title             String
+  status            String    @default("draft")
+  platforms         String[]
+  caption           String?   @db.Text
+  briefId           String?
+  selectedVariantId String?
+  scheduledAt       DateTime?
+  publishedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  org            Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  scheduledPosts ScheduledPost[]
+  assets         CampaignAsset[]
+  slides         CarouselSlide[]
+}
+
+model CampaignAsset {
+  id         String @id @default(cuid())
+  campaignId String
+  assetId    String
+  sortOrder  Int    @default(0)
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  asset    Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, assetId])
+}
+
+model Asset {
+  id         String   @id @default(cuid())
+  orgId      String
+  type       String
+  url        String
+  storageKey String?
+  filename   String?
+  mimeType   String?
+  sizeBytes  Int?
+  width      Int?
+  height     Int?
+  durationMs Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  org          Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaigns    CampaignAsset[]
+  edits        MediaEdit[]
+  carouselUses CarouselSlide[]
+  audioLayers  AudioLayer[]    @relation("AudioTrack")
+  parentMedia  AudioLayer[]    @relation("ParentMedia")
+}
+
+model MediaEdit {
+  id           String   @id @default(cuid())
+  orgId        String
+  assetId      String
+  operation    String
+  params       Json
+  version      Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([orgId])
+}
+
+model AudioLayer {
+  id           String @id @default(cuid())
+  orgId        String
+  mediaAssetId String?
+  audioAssetId String
+  startMs      Int    @default(0)
+  volume       Float  @default(1)
+  sortOrder    Int    @default(0)
+
+  parentMedia Asset? @relation("ParentMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  audioAsset  Asset  @relation("AudioTrack", fields: [audioAssetId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([mediaAssetId])
+}
+
+model CarouselSlide {
+  id           String  @id @default(cuid())
+  orgId        String
+  campaignId   String?
+  variantId    String?
+  sortOrder    Int     @default(0)
+  caption      String? @db.Text
+  mediaAssetId String?
+
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaign   Campaign?    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  mediaAsset Asset?       @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([orgId])
+}
+
+model Post {
+  id           String    @id @default(cuid())
+  orgId        String
+  campaignId   String?
+  platformKey  String
+  status       String    @default("queued")
+  scheduledAt  DateTime?
+  publishedAt  DateTime?
+  externalId   String?
+  errorMessage String?
+  retryCount   Int       @default(0)
+  payload      Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([orgId, status])
+  @@index([campaignId])
+}
+
+model ScheduledPost {
+  id           String    @id @default(cuid())
+  orgId        String
+  campaignId   String?
+  platform     String
+  status       String    @default("queued")
+  scheduledAt  DateTime
+  publishedAt  DateTime?
+  externalId   String?
+  errorMessage String?
+  retryCount   Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  campaign Campaign?    @relation(fields: [campaignId], references: [id])
+}
+
+model AiGeneration {
+  id        String   @id @default(cuid())
+  orgId     String
+  prompt    String   @db.Text
+  output    String?  @db.Text
+  model     String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String?
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  org  Organization? @relation(fields: [orgId], references: [id])
+  user User?         @relation(fields: [userId], references: [id])
+}
+
+model ChangelogEntry {
+  id          String   @id @default(cuid())
+  orgId       String?
+  version     String
+  title       String?
+  body        String   @db.Text
+  category    String   @default("improvement")
+  publishedAt DateTime @default(now())
+  isPublic    Boolean  @default(true)
+
+  org Organization? @relation(fields: [orgId], references: [id])
+}
