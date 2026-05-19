@@ -38,6 +38,9 @@ export type Platform = (typeof PLATFORMS)[number];
 /** One active device per subscription */
 export const DEVICE_LIMIT_DEFAULT = 1;
 
+/** Free AI briefs before trial/subscription */
+export const FREE_AI_GENERATIONS_LIMIT = 3;
+
 export const THEME_COOKIE = "bizopt-theme";
 
 export const CHANGELOG_CATEGORIES = [

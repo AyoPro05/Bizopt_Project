@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { getApiContext } from "@/lib/api-context";
 import { uploadAsset } from "@/services/media/assets";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  const ctx = await getApiContext(true);
+  const ip = clientIp(req);
+  const limited = rateLimit(`upload:${ip}`, 30, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: "Too many uploads." }, { status: 429 });
+  }
+
+  const ctx = await getApiContext({ requireEntitlement: true, requireDevice: true }, req);
   if ("error" in ctx) {
     return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   }

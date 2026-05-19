@@ -38,11 +38,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ctx = await getApiContext();
+  const ctx = await getApiContext({ requireEntitlement: true }, req);
   if ("error" in ctx) {
     return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   }

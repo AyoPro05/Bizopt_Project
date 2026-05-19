@@ -1,4 +1,4 @@
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile, unlink, readFile } from "fs/promises";
 import path from "path";
 
 export type UploadMeta = {
@@ -10,11 +10,10 @@ export type UploadMeta = {
 
 export type StoredObject = {
   storageKey: string;
-  url: string;
 };
 
-function uploadsRoot() {
-  return path.join(process.cwd(), "public", "uploads");
+function privateUploadsRoot() {
+  return path.join(process.cwd(), "storage", "private-uploads");
 }
 
 export function getStorageBackend(): "local" | "s3" {
@@ -28,24 +27,26 @@ export async function uploadObject(
 ): Promise<StoredObject> {
   if (getStorageBackend() === "s3") {
     throw new Error(
-      "S3 upload requires AWS SDK wiring — use local storage or set only DATABASE_URL for dev"
+      "S3 upload is not configured yet. Unset S3_* env vars to use private local storage."
     );
   }
 
   const safeName = meta.filename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
   const key = `${meta.orgId}/${Date.now()}-${safeName}`;
-  const filePath = path.join(uploadsRoot(), key);
+  const filePath = path.join(privateUploadsRoot(), key);
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, buffer);
-  return {
-    storageKey: key,
-    url: `/uploads/${key}`,
-  };
+  return { storageKey: key };
+}
+
+export async function readStoredObject(storageKey: string): Promise<Buffer> {
+  const filePath = path.join(privateUploadsRoot(), storageKey);
+  return readFile(filePath);
 }
 
 export async function deleteObject(storageKey: string): Promise<void> {
   try {
-    await unlink(path.join(uploadsRoot(), storageKey));
+    await unlink(path.join(privateUploadsRoot(), storageKey));
   } catch {
     /* ignore missing */
   }

@@ -25,7 +25,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ctx = await getApiContext(true);
+  const ctx = await getApiContext({ requireEntitlement: true }, req);
   if ("error" in ctx) {
     return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   }

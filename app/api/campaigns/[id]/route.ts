@@ -1,22 +1,20 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getUserPrimaryOrg } from "@/lib/permissions";
+import { getApiContext } from "@/lib/api-context";
 import { getCampaign, updateCampaign } from "@/services/campaigns";
+import { campaignUpdateSchema } from "@/lib/validators";
+import { safeJson } from "@/lib/helpers";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const ctx = await getApiContext();
+  if ("error" in ctx) {
+    return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   }
-  const org = await getUserPrimaryOrg(session.user.id);
-  if (!org) return NextResponse.json({ error: "No organization" }, { status: 400 });
 
-  const campaign = await getCampaign(org.id, id);
+  const campaign = await getCampaign(ctx.org.id, id);
   if (!campaign) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ campaign });
 }
@@ -26,15 +24,28 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const ctx = await getApiContext({ requireEntitlement: true }, req);
+  if ("error" in ctx) {
+    return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   }
-  const org = await getUserPrimaryOrg(session.user.id);
-  if (!org) return NextResponse.json({ error: "No organization" }, { status: 400 });
 
-  const body = await req.json();
-  await updateCampaign(org.id, id, body);
-  const campaign = await getCampaign(org.id, id);
+  const body = await safeJson<unknown>(req);
+  const parsed = campaignUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const data = {
+    ...parsed.data,
+    scheduledAt:
+      parsed.data.scheduledAt === null
+        ? null
+        : parsed.data.scheduledAt
+          ? new Date(parsed.data.scheduledAt)
+          : undefined,
+  };
+
+  await updateCampaign(ctx.org.id, id, data);
+  const campaign = await getCampaign(ctx.org.id, id);
   return NextResponse.json({ campaign });
 }

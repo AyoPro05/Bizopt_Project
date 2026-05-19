@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { Prisma, VariantType } from "@prisma/client";
+import { generateWithOpenAI, type BriefContext } from "./openai";
 
 const VARIANT_SPECS: {
   type: VariantType;
@@ -73,6 +74,15 @@ const VARIANT_SPECS: {
   },
 ];
 
+const TITLES: Record<VariantType, string> = {
+  caption: "Primary caption",
+  carousel_outline: "Carousel story arc",
+  image_prompt: "Hero image prompt",
+  video_idea: "Short-form video concept",
+  audio_idea: "Audio layer concept",
+  thread: "LinkedIn / X thread",
+};
+
 function formatCaption(prompt: string, tone: string): string {
   const base = prompt.trim().slice(0, 280);
   if (tone === "bold") return `🔥 ${base}\n\nReady to level up? Drop a comment.`;
@@ -81,13 +91,27 @@ function formatCaption(prompt: string, tone: string): string {
   return `${base}\n\n#BizOpt #Growth`;
 }
 
+export type GenerateOptions = {
+  tone?: string;
+  goal?: string;
+  industry?: string;
+  audience?: string;
+  platforms?: string[];
+};
+
 export async function createBriefWithVariants(
   orgId: string,
   userId: string,
   prompt: string,
-  options?: { tone?: string }
+  options?: GenerateOptions
 ) {
   const tone = options?.tone ?? "professional";
+  const goals = {
+    goal: options?.goal,
+    industry: options?.industry,
+    audience: options?.audience,
+    platforms: options?.platforms,
+  };
 
   const brief = await db.ideaBrief.create({
     data: {
@@ -95,19 +119,34 @@ export async function createBriefWithVariants(
       userId,
       prompt,
       tone,
+      goals: goals as Prisma.InputJsonValue,
       status: "generating",
     },
   });
 
+  const ctx: BriefContext = {
+    prompt,
+    tone,
+    goal: options?.goal,
+    industry: options?.industry,
+    audience: options?.audience,
+    platforms: options?.platforms,
+  };
+
+  const llm = await generateWithOpenAI(ctx);
+
   const variants = await Promise.all(
     VARIANT_SPECS.map((spec, index) => {
-      const { body, metadata } = spec.build(prompt, tone);
+      const llmBody = llm?.[spec.type]?.body;
+      const { body, metadata } = llmBody
+        ? { body: llmBody, metadata: llm?.[spec.type]?.metadata }
+        : spec.build(prompt, tone);
       return db.contentVariant.create({
         data: {
           orgId,
           briefId: brief.id,
           type: spec.type,
-          title: spec.title,
+          title: TITLES[spec.type],
           body,
           metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
           sortOrder: index,
@@ -129,16 +168,28 @@ export async function createBriefWithVariants(
       userId,
       briefId: brief.id,
       entityType: "idea",
-      snapshotJson: { prompt, tone, variantIds: variants.map((v) => v.id) },
+      snapshotJson: {
+        prompt,
+        tone,
+        goals,
+        variantIds: variants.map((v) => v.id),
+        source: llm ? "openai" : "template",
+      },
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
     update: {
-      snapshotJson: { prompt, tone, variantIds: variants.map((v) => v.id) },
+      snapshotJson: {
+        prompt,
+        tone,
+        goals,
+        variantIds: variants.map((v) => v.id),
+        source: llm ? "openai" : "template",
+      },
       lastSavedAt: new Date(),
     },
   });
 
-  return { brief, variants };
+  return { brief, variants, source: llm ? ("openai" as const) : ("template" as const) };
 }
 
 export async function getBriefWithVariants(orgId: string, briefId: string) {

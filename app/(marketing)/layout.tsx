@@ -20,7 +20,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               href="/signup"
               className="rounded-xl bg-[var(--color-accent)] px-4 py-2 text-white hover:bg-[var(--color-accent-hover)]"
             >
-              Start free trial
+              Start trial — $0.99
             </Link>
           </nav>
         </div>

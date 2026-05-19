@@ -14,16 +14,25 @@ import {
 import { upsertSubscriptionFromStripe } from "./subscriptions";
 import { recordPaymentFromInvoice, recordPaymentIntent } from "./payments";
 import { syncRefundFromStripe } from "./refunds";
+import { verifyOrgOwnsStripeCustomer } from "@/lib/permissions";
 
 async function resolveOrgIdFromStripe(
   customerId: string,
   metadataOrgId?: string | null
 ): Promise<string | null> {
-  if (metadataOrgId) return metadataOrgId;
-  const sub = await db.subscription.findFirst({
+  const byCustomer = await db.subscription.findFirst({
     where: { stripeCustomerId: customerId },
   });
-  return sub?.orgId ?? null;
+
+  if (metadataOrgId) {
+    const owned = await verifyOrgOwnsStripeCustomer(metadataOrgId, customerId);
+    if (owned) return metadataOrgId;
+    const pending = await db.subscription.findUnique({ where: { orgId: metadataOrgId } });
+    if (pending && !pending.stripeCustomerId) return metadataOrgId;
+    return byCustomer?.orgId ?? null;
+  }
+
+  return byCustomer?.orgId ?? null;
 }
 
 export async function processStripeEvent(event: Stripe.Event): Promise<void> {

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { deviceFetch } from "@/lib/client-device";
 
 type Props = {
   onUploaded?: (asset: { id: string; url: string; filename?: string | null }) => void;
@@ -20,7 +21,7 @@ export function MediaUploader({ onUploaded }: Props) {
     setError("");
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch("/api/media/upload", { method: "POST", body: form });
+    const res = await deviceFetch("/api/media/upload", { method: "POST", body: form });
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {

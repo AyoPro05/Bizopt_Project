@@ -20,6 +20,7 @@
 
 # uploads
 /public/uploads/
+/storage/
 
 # misc
 .DS_Store

@@ -1,20 +1,21 @@
 # BizOpt — AI content & social publishing
 
-Premium SaaS for AI-generated content packs, multi-platform publishing, and Stripe subscriptions.
+Premium SaaS for AI-generated business post packs, multi-platform publishing, and Stripe subscriptions.
 
-## Phases shipped (A–C)
+## Shipped
 
-- **A:** $0.99 / 7-day trial (payment method required) → $9.99/mo, webhook trial events, 1 device limit
-- **B:** `/home` dashboard, Home in sidebar + top bar, light/dark/system theme in Settings, draft autosave API
-- **C:** AI Studio generates **6 variants** per idea (caption, carousel, image/video/audio ideas, thread)
-
-**Next:** D (media editor), E (carousel + platforms), F (Apple-ready `packages/core` extraction)
+- **Billing:** $0.99 / 7-day trial → $9.99/mo, webhooks, refunds, 1 device limit (enforced on paid APIs)
+- **AI Studio:** 3 free ideas, then trial — OpenAI when `OPENAI_API_KEY` is set, templates as fallback
+- **Business brief:** goal, industry, audience, platforms
+- **Media:** private storage, authenticated file URLs, MIME allowlist
+- **Campaigns:** builder, carousel, platform registry
+- **Security:** signed OAuth state, rate limits, campaign PATCH allowlist, webhook customer verification
 
 ## Quick start
 
 ```bash
 cp .env.example .env
-# DATABASE_URL, NEXTAUTH_SECRET, STRIPE_SECRET_KEY, STRIPE_PRICE_ID
+# DATABASE_URL, NEXTAUTH_SECRET, DEVICE_SECRET, STRIPE_*
 
 npm install
 npx prisma db push
@@ -22,22 +23,19 @@ npm run db:seed
 npm run dev
 ```
 
-## Stripe trial setup
+## Stripe + webhooks
 
-1. Create a **$9.99/month** recurring Price → `STRIPE_PRICE_ID`
-2. Optional: one-time **$0.99** Price → `STRIPE_TRIAL_FEE_PRICE_ID` (charged at checkout with subscription trial)
-3. Webhooks: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
-
-Checkout uses `payment_method_collection: always` and `trial_period_days: 7`.
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
 
 ## Key routes
 
 | Route | Purpose |
 |-------|---------|
-| `/home` | Home dashboard + draft resume |
-| `/ai-studio` | Multi-variant AI generation |
-| `/settings` | Theme toggle |
-| `/integrations` | Platform registry |
+| `/` | Marketing + hero |
+| `/home` | Dashboard + recent ideas |
+| `/ai-studio` | Multi-variant generation |
+| `/campaigns/[id]/builder` | Campaign + carousel |
+| `/assets` | Media library (private files) |
 | `/billing` | Trial + subscription |
-
-`/dashboard` redirects to `/home`.

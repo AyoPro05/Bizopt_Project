@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { AppTopbar } from "@/components/shell/app-topbar";
 import { DraftResumeCard } from "@/components/drafts/draft-resume-card";
 import { Megaphone, Sparkles, CreditCard, Calendar } from "lucide-react";
-import { BILLING } from "@/lib/constants";
+import { BILLING, FREE_AI_GENERATIONS_LIMIT } from "@/lib/constants";
 import { formatDate } from "@/lib/dates";
 
 export default async function HomePage() {
@@ -20,7 +20,8 @@ export default async function HomePage() {
   const org = userId ? await getUserPrimaryOrg(userId) : null;
   if (!org) return <p>No workspace found.</p>;
 
-  const [analytics, entitlement, subscription, drafts, recentBriefs] = await Promise.all([
+  const [analytics, entitlement, subscription, drafts, recentBriefs, briefCount] =
+    await Promise.all([
     getOrgAnalytics(org.id),
     db.entitlement.findUnique({ where: { orgId: org.id } }),
     db.subscription.findUnique({ where: { orgId: org.id } }),
@@ -28,8 +29,9 @@ export default async function HomePage() {
     db.ideaBrief.findMany({
       where: { orgId: org.id },
       orderBy: { updatedAt: "desc" },
-      take: 3,
+      take: 6,
     }),
+    db.ideaBrief.count({ where: { orgId: org.id } }),
   ]);
 
   const state = entitlement?.userFacingState ?? "pending_payment";
@@ -45,7 +47,9 @@ export default async function HomePage() {
             Start your {BILLING.trialDisplayPrice} · {BILLING.trialDays}-day trial
           </p>
           <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
-            Payment method required. Then {BILLING.displayPrice}/mo — cancel anytime at period end.
+            Try AI Studio free first ({FREE_AI_GENERATIONS_LIMIT} ideas). Trial is{" "}
+            {BILLING.trialDisplayPrice} for{" "}
+            {BILLING.trialDays} days, then {BILLING.displayPrice}/mo.
           </p>
           <Link href="/billing" className="mt-4 inline-block">
             <Button>Start trial</Button>
@@ -70,6 +74,32 @@ export default async function HomePage() {
         </span>
       </div>
 
+      {recentBriefs.length > 0 && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold">Recent ideas</h2>
+            <Link href="/ai-studio" className="text-sm text-[var(--color-accent)] hover:underline">
+              Open AI Studio
+            </Link>
+          </div>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {recentBriefs.map((b) => (
+              <li key={b.id}>
+                <Link
+                  href={`/ai-studio?brief=${b.id}`}
+                  className="block rounded-xl border border-[var(--color-border)] p-4 transition hover:bg-[var(--color-surface)]"
+                >
+                  <p className="line-clamp-2 text-sm font-medium">{b.prompt}</p>
+                  <p className="mt-2 text-xs text-[var(--color-ink-muted)] capitalize">
+                    {b.tone ?? "professional"} · {b.status}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {drafts.length > 0 && (
         <section className="mt-8">
           <h2 className="font-display text-lg font-semibold">Resume drafts</h2>
@@ -85,7 +115,7 @@ export default async function HomePage() {
         {[
           { label: "Campaigns", value: analytics.summary.totalCampaigns },
           { label: "Published", value: analytics.summary.publishedPosts },
-          { label: "AI briefs", value: recentBriefs.length },
+          { label: "AI ideas", value: briefCount },
           { label: "Success", value: `${analytics.summary.successRate}%` },
         ].map((stat) => (
           <Card key={stat.label}>

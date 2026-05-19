@@ -69,7 +69,7 @@ export default function DeviceCheckPage() {
       <Smartphone className="mx-auto h-12 w-12 text-[var(--color-accent)]" />
       <h1 className="mt-4 font-display text-2xl font-semibold">Device check</h1>
       <p className="mt-2 text-sm text-[var(--color-ink-muted)]">
-        BizOpt binds up to 2 devices per subscription to prevent account sharing abuse.
+        BizOpt binds 1 device per subscription to prevent account sharing abuse.
       </p>
       {message && <p className="mt-4 text-sm">{message}</p>}
       <div className="mt-6 flex flex-col gap-3">

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { uploadObject, deleteObject } from "@/lib/storage";
+import { isAllowedMime } from "@/lib/media-mime";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 
@@ -37,6 +38,9 @@ export async function uploadAsset(
   if (file.sizeBytes > MAX_BYTES) {
     throw new Error("File exceeds 50MB limit");
   }
+  if (!isAllowedMime(file.mimeType)) {
+    throw new Error("File type not allowed");
+  }
 
   const stored = await uploadObject(file.buffer, {
     orgId,
@@ -45,16 +49,21 @@ export async function uploadAsset(
     sizeBytes: file.sizeBytes,
   });
 
-  return db.asset.create({
+  const asset = await db.asset.create({
     data: {
       orgId,
       type: inferType(file.mimeType),
-      url: stored.url,
+      url: "",
       storageKey: stored.storageKey,
       filename: file.filename,
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
     },
+  });
+
+  return db.asset.update({
+    where: { id: asset.id },
+    data: { url: `/api/media/${asset.id}/file` },
   });
 }
 

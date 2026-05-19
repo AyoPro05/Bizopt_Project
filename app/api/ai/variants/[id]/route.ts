@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getUserPrimaryOrg } from "@/lib/permissions";
+import { getApiContext } from "@/lib/api-context";
+import { canUseAiStudio } from "@/lib/permissions";
 import { selectVariant } from "@/services/ai/generate-variants";
 
 export async function PATCH(
@@ -9,13 +8,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const ctx = await getApiContext();
+  if ("error" in ctx) {
+    return NextResponse.json({ error: ctx.error }, { status: ctx.status });
   }
-  const org = await getUserPrimaryOrg(session.user.id);
-  if (!org) return NextResponse.json({ error: "No organization" }, { status: 400 });
 
-  const variant = await selectVariant(org.id, id);
+  const access = await canUseAiStudio(ctx.org.id);
+  if (!access.allowed) {
+    return NextResponse.json({ error: "Subscription required" }, { status: 402 });
+  }
+
+  const variant = await selectVariant(ctx.org.id, id);
   return NextResponse.json({ variant });
 }

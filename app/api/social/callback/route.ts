@@ -1,39 +1,69 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getUserPrimaryOrg } from "@/lib/permissions";
 import { db } from "@/lib/db";
 import { appUrl } from "@/lib/helpers";
+import { verifyOAuthState } from "@/lib/oauth-state";
 
 export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.redirect(appUrl("/login"));
+  }
+
   const { searchParams } = new URL(req.url);
-  const platform = searchParams.get("platform");
-  const orgId = searchParams.get("orgId");
+  const stateToken = searchParams.get("state");
   const code = searchParams.get("code");
+  const platform = searchParams.get("platform");
+  const error = searchParams.get("error");
 
-  if (!platform || !orgId) {
-    return NextResponse.redirect(appUrl("/settings?error=invalid_callback"));
+  if (error) {
+    return NextResponse.redirect(appUrl(`/integrations?error=${error}`));
   }
 
-  if (code) {
-    await db.socialAccount.upsert({
-      where: {
-        orgId_platform_accountId: {
-          orgId,
-          platform,
-          accountId: `pending_${platform}`,
-        },
-      },
-      create: {
-        orgId,
-        platform,
-        accountId: `pending_${platform}`,
-        accountName: `${platform} account`,
-        accessToken: code,
-      },
-      update: {
-        disconnectedAt: null,
-        connectedAt: new Date(),
-      },
-    });
+  const state = verifyOAuthState(stateToken);
+  if (!state) {
+    return NextResponse.redirect(appUrl("/integrations?error=invalid_state"));
   }
 
-  return NextResponse.redirect(appUrl("/settings?connected=" + platform));
+  const org = await getUserPrimaryOrg(session.user.id);
+  if (!org || org.id !== state.orgId || session.user.id !== state.userId) {
+    return NextResponse.redirect(appUrl("/integrations?error=org_mismatch"));
+  }
+
+  const platformKey = platform ?? state.platform;
+  if (!code) {
+    return NextResponse.redirect(appUrl("/integrations?error=missing_code"));
+  }
+
+  const accountId =
+    code === "demo_connected"
+      ? `demo_${platformKey}_${org.id.slice(0, 8)}`
+      : `oauth_${platformKey}_${code.slice(0, 12)}`;
+
+  await db.socialAccount.upsert({
+    where: {
+      orgId_platform_accountId: {
+        orgId: org.id,
+        platform: platformKey,
+        accountId,
+      },
+    },
+    create: {
+      orgId: org.id,
+      platform: platformKey,
+      accountId,
+      accountName: `${platformKey} account`,
+      metadata: { oauthPendingExchange: code !== "demo_connected" },
+    },
+    update: {
+      disconnectedAt: null,
+      connectedAt: new Date(),
+      accessToken: null,
+      metadata: { oauthPendingExchange: code !== "demo_connected" },
+    },
+  });
+
+  return NextResponse.redirect(appUrl(`/integrations?connected=${platformKey}`));
 }

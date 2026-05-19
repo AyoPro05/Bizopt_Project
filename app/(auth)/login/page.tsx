@@ -26,7 +26,7 @@ export default function LoginPage() {
       setError("Invalid email or password");
       return;
     }
-    router.push("/device-check?next=/home");
+    router.push("/device-check?next=/ai-studio");
   }
 
   return (

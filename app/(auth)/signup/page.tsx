@@ -6,7 +6,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { BILLING, APP_NAME } from "@/lib/constants";
+import { BILLING } from "@/lib/constants";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,14 +27,14 @@ export default function SignupPage() {
       return;
     }
     await signIn("credentials", { email: form.email, password: form.password, redirect: false });
-    router.push("/device-check?next=/home");
+    router.push("/device-check?next=/ai-studio");
   }
 
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 shadow-lg">
       <h1 className="font-display text-2xl font-semibold">Create your workspace</h1>
       <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-        {APP_NAME} — {BILLING.displayPrice}/mo after you subscribe
+        {BILLING.trialDisplayPrice} for {BILLING.trialDays} days, then {BILLING.displayPrice}/mo
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>

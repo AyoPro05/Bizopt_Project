@@ -5,6 +5,7 @@ import { listDevices } from "@/services/devices";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/dates";
+import { DEVICE_LIMIT_DEFAULT } from "@/lib/constants";
 import { Smartphone } from "lucide-react";
 
 export default async function DevicesPage() {
@@ -17,7 +18,7 @@ export default async function DevicesPage() {
     db.entitlement.findUnique({ where: { orgId: org.id } }),
   ]);
 
-  const limit = entitlement?.deviceLimit ?? 2;
+  const limit = entitlement?.deviceLimit ?? DEVICE_LIMIT_DEFAULT;
 
   return (
     <div>
