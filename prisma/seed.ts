@@ -65,7 +65,59 @@ async function main() {
     });
   }
 
-  console.log("Seeded platform registry and changelog");
+  const complianceRules = [
+    {
+      key: "billing_active",
+      title: "Active subscription or trial",
+      description: "Workspace must have an active entitlement from Stripe webhooks.",
+      severity: "high",
+    },
+    {
+      key: "payment_method_on_file",
+      title: "Payment method on file",
+      description: "Trial requires a payment method before publishing paid features.",
+      severity: "medium",
+    },
+    {
+      key: "device_bound",
+      title: "Device bound",
+      description: "One active device per subscription for access control.",
+      severity: "medium",
+    },
+    {
+      key: "platform_connected",
+      title: "Platform connected",
+      description: "At least one social platform should be connected for publishing.",
+      severity: "low",
+    },
+    {
+      key: "publish_ready",
+      title: "Publish ready",
+      description: "Cannot schedule posts without a connected platform account.",
+      severity: "high",
+    },
+    {
+      key: "refund_policy_ack",
+      title: "Billing history",
+      description: "Tracks whether the workspace has completed at least one payment.",
+      severity: "low",
+    },
+  ];
+
+  for (const rule of complianceRules) {
+    await prisma.complianceRule.upsert({
+      where: { key: rule.key },
+      create: rule,
+      update: {
+        title: rule.title,
+        description: rule.description,
+        severity: rule.severity,
+        active: true,
+      },
+    });
+  }
+
+  console.log("Seeded platform registry, changelog, and compliance rules");
 }
 
 main()

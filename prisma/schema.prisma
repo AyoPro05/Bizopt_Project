@@ -91,6 +91,8 @@ model Organization {
   id        String   @id @default(cuid())
   name      String
   slug      String   @unique
+  industry  String?
+  country   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -111,6 +113,15 @@ model Organization {
   ideaBriefs       IdeaBrief[]
   contentVariants  ContentVariant[]
   editorSessions   EditorSession[]
+  businessProfile  BusinessProfile?
+  growthSnapshots  GrowthMetricSnapshot[]
+  growthPredictions GrowthPrediction[]
+  growthRecommendations GrowthRecommendation[]
+  complianceChecks ComplianceCheck[]
+  complianceFindings ComplianceFinding[]
+  complianceRecommendations ComplianceRecommendation[]
+  riskEvents       RiskEvent[]
+  recommendationActions RecommendationAction[]
 }
 
 model OrgMember {
@@ -516,4 +527,158 @@ model ChangelogEntry {
   isPublic    Boolean  @default(true)
 
   org Organization? @relation(fields: [orgId], references: [id])
+}
+
+model BusinessProfile {
+  id           String   @id @default(cuid())
+  orgId        String   @unique
+  legalName    String?
+  tradingName  String?
+  website      String?
+  country      String?
+  industry     String?
+  employeeSize String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model GrowthMetricSnapshot {
+  id          String    @id @default(cuid())
+  orgId       String
+  metricKey   String
+  metricValue Float
+  periodStart DateTime?
+  periodEnd   DateTime?
+  source      String?
+  createdAt   DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, metricKey])
+}
+
+model GrowthPrediction {
+  id                  String   @id @default(cuid())
+  orgId               String
+  briefId             String?
+  campaignId          String?
+  score               Int
+  predictedReach      Float?
+  predictedEngagement Float?
+  predictedConversion Float?
+  label               String?
+  explanation         String?  @db.Text
+  bestPostHourUtc     Int?
+  recommendedFormats  String[]
+  createdAt           DateTime @default(now())
+
+  org              Organization           @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  recommendations  GrowthRecommendation[]
+
+  @@index([orgId, createdAt])
+}
+
+model GrowthRecommendation {
+  id                 String   @id @default(cuid())
+  orgId              String
+  growthPredictionId String?
+  recommendation     String   @db.Text
+  priority           String   @default("medium")
+  createdAt          DateTime @default(now())
+
+  org        Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  prediction GrowthPrediction? @relation(fields: [growthPredictionId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+}
+
+model ComplianceRule {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  title       String
+  description String   @db.Text
+  severity    String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  checks ComplianceCheck[]
+}
+
+model ComplianceCheck {
+  id           String   @id @default(cuid())
+  orgId        String
+  ruleId       String?
+  status       String
+  severity     String
+  title        String
+  details      String?  @db.Text
+  remediation  String?  @db.Text
+  checkedAt    DateTime @default(now())
+
+  org              Organization               @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  rule             ComplianceRule?            @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  findings         ComplianceFinding[]
+  recommendations  ComplianceRecommendation[]
+
+  @@index([orgId, status])
+}
+
+model ComplianceFinding {
+  id                String   @id @default(cuid())
+  orgId             String
+  complianceCheckId String
+  finding           String   @db.Text
+  severity          String
+  createdAt         DateTime @default(now())
+
+  org   Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  check ComplianceCheck @relation(fields: [complianceCheckId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+}
+
+model ComplianceRecommendation {
+  id                String   @id @default(cuid())
+  orgId             String
+  complianceCheckId String?
+  recommendation    String   @db.Text
+  createdAt         DateTime @default(now())
+
+  org   Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  check ComplianceCheck? @relation(fields: [complianceCheckId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+}
+
+model RiskEvent {
+  id         String    @id @default(cuid())
+  orgId      String
+  category   String
+  severity   String
+  title      String
+  details    String?   @db.Text
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, resolvedAt])
+}
+
+model RecommendationAction {
+  id          String   @id @default(cuid())
+  orgId       String
+  category    String
+  title       String
+  description String?  @db.Text
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
 }

@@ -16,7 +16,9 @@
     "worker:publish": "tsx workers/publish-worker.ts",
     "worker:queue": "tsx workers/queue-worker.ts",
     "worker:ai": "tsx workers/ai-worker.ts",
-    "worker:media": "tsx workers/media-worker.ts"
+    "worker:media": "tsx workers/media-worker.ts",
+    "worker:growth": "tsx workers/growth-worker.ts",
+    "worker:compliance": "tsx workers/compliance-worker.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",

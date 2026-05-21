@@ -20,6 +20,8 @@ export const config = {
     "/assets/:path*",
     "/ai-studio/:path*",
     "/analytics/:path*",
+    "/growth-intelligence/:path*",
+    "/compliance-center/:path*",
     "/settings/:path*",
     "/billing/:path*",
     "/devices/:path*",

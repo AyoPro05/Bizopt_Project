@@ -22,6 +22,12 @@ const styles: Record<string, string> = {
   improvement: "bg-sky-100 text-sky-800",
   fix: "bg-orange-100 text-orange-800",
   security: "bg-red-100 text-red-800",
+  pass: "bg-emerald-100 text-emerald-800",
+  warn: "bg-amber-100 text-amber-800",
+  fail: "bg-red-100 text-red-800",
+  high: "bg-red-100 text-red-800",
+  medium: "bg-amber-100 text-amber-800",
+  low: "bg-slate-100 text-slate-600",
 };
 
 export function Badge({

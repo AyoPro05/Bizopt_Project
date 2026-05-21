@@ -3,7 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserPrimaryOrg } from "@/lib/permissions";
 import { getOrgAnalytics } from "@/services/analytics";
+import { getGrowthDashboard } from "@/services/growth/scoring";
+import { getComplianceSummary } from "@/services/compliance/checks";
 import { getResumableSessions } from "@/services/editor/draft-session";
+import { GrowthScoreCard } from "@/components/dashboard/growth-score-card";
+import { BusinessHealthCard } from "@/components/dashboard/business-health-card";
+import { ComplianceStatusCard } from "@/components/dashboard/compliance-status-card";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +25,16 @@ export default async function HomePage() {
   const org = userId ? await getUserPrimaryOrg(userId) : null;
   if (!org) return <p>No workspace found.</p>;
 
-  const [analytics, entitlement, subscription, drafts, recentBriefs, briefCount] =
-    await Promise.all([
+  const [
+    analytics,
+    entitlement,
+    subscription,
+    drafts,
+    recentBriefs,
+    briefCount,
+    growthDashboard,
+    complianceSummary,
+  ] = await Promise.all([
     getOrgAnalytics(org.id),
     db.entitlement.findUnique({ where: { orgId: org.id } }),
     db.subscription.findUnique({ where: { orgId: org.id } }),
@@ -32,6 +45,8 @@ export default async function HomePage() {
       take: 6,
     }),
     db.ideaBrief.count({ where: { orgId: org.id } }),
+    getGrowthDashboard(org.id),
+    getComplianceSummary(org.id),
   ]);
 
   const state = entitlement?.userFacingState ?? "pending_payment";
@@ -111,7 +126,13 @@ export default async function HomePage() {
         </section>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <GrowthScoreCard data={growthDashboard} />
+        <BusinessHealthCard score={growthDashboard.businessHealthScore} />
+        <ComplianceStatusCard summary={complianceSummary} />
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Campaigns", value: analytics.summary.totalCampaigns },
           { label: "Published", value: analytics.summary.publishedPosts },
