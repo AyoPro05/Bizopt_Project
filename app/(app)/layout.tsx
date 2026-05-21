@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { Providers } from "@/app/providers";
-import { Sidebar } from "@/components/layout/sidebar";
+import { Sidebar } from "@/components/shell/sidebar";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { getUserTheme } from "@/lib/theme";
 import type { ThemeSetting } from "@/components/theme/theme-provider";

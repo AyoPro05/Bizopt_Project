@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserPrimaryOrg } from "@/lib/permissions";
 import { db } from "@/lib/db";
+import { getConnectedPlatformKeys } from "@/lib/platform-accounts";
 import { Card } from "@/components/ui/card";
 import { AppTopbar } from "@/components/shell/app-topbar";
 import Link from "next/link";
@@ -11,14 +12,12 @@ export default async function IntegrationsPage() {
   const org = session?.user?.id ? await getUserPrimaryOrg(session.user.id) : null;
   if (!org) return <p>No workspace.</p>;
 
-  const [registry, accounts] = await Promise.all([
+  const [registry, connectedKeys] = await Promise.all([
     db.platformRegistry.findMany({
       where: { isEnabled: true },
       orderBy: { sortOrder: "asc" },
     }),
-    db.platformAccount.findMany({
-      where: { orgId: org.id, disconnectedAt: null },
-    }),
+    getConnectedPlatformKeys(org.id),
   ]);
 
   const fallback = [
@@ -40,7 +39,7 @@ export default async function IntegrationsPage() {
 
       <div className="space-y-3">
         {platforms.map((p) => {
-          const connected = accounts.some((a) => a.platformKey === p.key);
+          const connected = connectedKeys.includes(p.key);
           return (
             <Card key={p.key} className="flex items-center justify-between py-4">
               <div>

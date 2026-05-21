@@ -1,13 +1,14 @@
 import { db } from "@/lib/db";
+import { countConnectedPlatforms } from "@/lib/platform-accounts";
 
 export async function getOrgAnalytics(orgId: string) {
-  const [campaigns, published, scheduled, failed, socialAccounts, aiGens] =
+  const [campaigns, published, scheduled, failed, connectedAccounts, aiGens] =
     await Promise.all([
       db.campaign.count({ where: { orgId } }),
       db.scheduledPost.count({ where: { orgId, status: "published" } }),
       db.scheduledPost.count({ where: { orgId, status: "queued" } }),
       db.scheduledPost.count({ where: { orgId, status: "failed" } }),
-      db.socialAccount.count({ where: { orgId, disconnectedAt: null } }),
+      countConnectedPlatforms(orgId),
       db.aiGeneration.count({ where: { orgId, status: "completed" } }),
     ]);
 
@@ -30,7 +31,7 @@ export async function getOrgAnalytics(orgId: string) {
       publishedPosts: published,
       queuedPosts: scheduled,
       failedPosts: failed,
-      connectedAccounts: socialAccounts,
+      connectedAccounts,
       aiGenerations: aiGens,
       successRate:
         published + failed > 0

@@ -6,21 +6,37 @@ import {
   requireDeviceBound,
 } from "@/lib/permissions";
 import { deviceHeadersFromRequest } from "@/lib/device";
+import { verifyAccessToken } from "@/lib/mobile-auth";
 
 export type ApiContextOptions = {
   requireEntitlement?: boolean;
   requireDevice?: boolean;
 };
 
+async function resolveUserId(req?: Request): Promise<string | null> {
+  if (req) {
+    const header = req.headers.get("authorization");
+    if (header?.startsWith("Bearer ")) {
+      const token = header.slice(7).trim();
+      const mobile = verifyAccessToken(token);
+      if (mobile) return mobile.userId;
+    }
+  }
+
+  const session = await getServerSession(authOptions);
+  return session?.user?.id ?? null;
+}
+
 export async function getApiContext(
   options: ApiContextOptions = {},
   req?: Request
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
     return { error: "Unauthorized" as const, status: 401 };
   }
-  const org = await getUserPrimaryOrg(session.user.id);
+
+  const org = await getUserPrimaryOrg(userId);
   if (!org) {
     return { error: "No organization" as const, status: 400 };
   }
@@ -46,5 +62,5 @@ export async function getApiContext(
     }
   }
 
-  return { session, org, userId: session.user.id };
+  return { org, userId };
 }

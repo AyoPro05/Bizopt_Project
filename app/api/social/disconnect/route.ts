@@ -3,10 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserPrimaryOrg } from "@/lib/permissions";
 import { db } from "@/lib/db";
+import { disconnectPlatform } from "@/lib/platform-accounts";
 import { safeJson } from "@/lib/helpers";
 import { z } from "zod";
 
-const schema = z.object({ accountId: z.string() });
+const schema = z.object({
+  accountId: z.string().optional(),
+  platform: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -19,13 +23,24 @@ export async function POST(req: Request) {
   const body = await safeJson<unknown>(req);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "accountId required" }, { status: 400 });
+    return NextResponse.json({ error: "accountId or platform required" }, { status: 400 });
   }
 
-  await db.socialAccount.updateMany({
-    where: { orgId: org.id, id: parsed.data.accountId },
-    data: { disconnectedAt: new Date() },
-  });
+  const { accountId, platform } = parsed.data;
+  if (!accountId && !platform) {
+    return NextResponse.json({ error: "accountId or platform required" }, { status: 400 });
+  }
+
+  if (accountId) {
+    const account = await db.socialAccount.findFirst({
+      where: { orgId: org.id, id: accountId },
+    });
+    if (account) {
+      await disconnectPlatform(org.id, account.platform, account.accountId);
+    }
+  } else if (platform) {
+    await disconnectPlatform(org.id, platform);
+  }
 
   return NextResponse.json({ ok: true });
 }

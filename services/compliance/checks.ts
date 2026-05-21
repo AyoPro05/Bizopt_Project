@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { countConnectedPlatforms } from "@/lib/platform-accounts";
 import { computeBusinessHealthScore } from "@/services/growth/scoring";
 
 export type ComplianceSummary = {
@@ -64,7 +65,7 @@ export async function runComplianceChecks(orgId: string, userId?: string) {
     db.subscription.findUnique({ where: { orgId } }),
     db.entitlement.findUnique({ where: { orgId } }),
     db.device.count({ where: { orgId, revokedAt: null } }),
-    db.platformAccount.count({ where: { orgId, disconnectedAt: null } }),
+    countConnectedPlatforms(orgId),
     db.payment.count({ where: { orgId, status: "succeeded" } }),
   ]);
 

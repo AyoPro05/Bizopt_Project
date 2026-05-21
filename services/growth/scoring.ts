@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { countConnectedPlatforms } from "@/lib/platform-accounts";
 import { getOrgAnalytics } from "@/services/analytics";
 
 export type GrowthDashboard = {
@@ -41,7 +42,7 @@ export async function computeBusinessHealthScore(orgId: string): Promise<number>
   const [subscription, devices, platforms, complianceFails] = await Promise.all([
     db.subscription.findUnique({ where: { orgId } }),
     db.device.count({ where: { orgId, revokedAt: null } }),
-    db.platformAccount.count({ where: { orgId, disconnectedAt: null } }),
+    countConnectedPlatforms(orgId),
     db.complianceCheck.count({ where: { orgId, status: "fail" } }),
   ]);
 

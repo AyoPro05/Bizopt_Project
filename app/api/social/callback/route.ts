@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserPrimaryOrg } from "@/lib/permissions";
-import { db } from "@/lib/db";
 import { appUrl } from "@/lib/helpers";
 import { verifyOAuthState } from "@/lib/oauth-state";
+import { upsertConnectedPlatform } from "@/lib/platform-accounts";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -42,28 +42,12 @@ export async function GET(req: Request) {
       ? `demo_${platformKey}_${org.id.slice(0, 8)}`
       : `oauth_${platformKey}_${code.slice(0, 12)}`;
 
-  await db.socialAccount.upsert({
-    where: {
-      orgId_platform_accountId: {
-        orgId: org.id,
-        platform: platformKey,
-        accountId,
-      },
-    },
-    create: {
-      orgId: org.id,
-      platform: platformKey,
-      accountId,
-      accountName: `${platformKey} account`,
-      metadata: { oauthPendingExchange: code !== "demo_connected" },
-    },
-    update: {
-      disconnectedAt: null,
-      connectedAt: new Date(),
-      accessToken: null,
-      metadata: { oauthPendingExchange: code !== "demo_connected" },
-    },
-  });
+  await upsertConnectedPlatform(
+    org.id,
+    platformKey,
+    accountId,
+    `${platformKey} account`
+  );
 
   return NextResponse.redirect(appUrl(`/integrations?connected=${platformKey}`));
 }

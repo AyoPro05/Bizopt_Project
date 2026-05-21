@@ -31,6 +31,11 @@ Multi-tenant SaaS for AI content creation, social publishing, **Growth Intellige
 - Seeded rules in `prisma/seed.ts`
 - APIs: `POST /api/compliance/run-checks`, `GET /api/compliance/findings`, `GET /api/compliance/rules`
 
+## Related docs
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — code layout and platform account sync
+- [APPLE.md](./APPLE.md) — native app / App Store path
+
 ## Schema notes (vs generic PRD paste)
 
 This repo uses `OrgMember`, `Asset`, `Entitlement`, `/home` (not `/dashboard`), and private media at `/api/media/[id]/file`. Extend incrementally rather than renaming wholesale.

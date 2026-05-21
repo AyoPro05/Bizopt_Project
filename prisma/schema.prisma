@@ -39,6 +39,7 @@ model User {
   settings      UserSettings?
   ideaBriefs    IdeaBrief[]
   editorSessions EditorSession[]
+  mobileSessions MobileSession[]
 }
 
 model UserSettings {
@@ -77,6 +78,21 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MobileSession {
+  id          String    @id @default(cuid())
+  userId      String
+  refreshHash String    @unique
+  deviceLabel String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {

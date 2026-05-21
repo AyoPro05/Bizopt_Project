@@ -1,0 +1,390 @@
+openapi: 3.0.3
+info:
+  title: BizOpt API
+  description: |
+    REST API for BizOpt web and native (iOS) clients.
+    Authenticate with `Authorization: Bearer <accessToken>` from `/api/auth/mobile/login`.
+    Device-bound routes also require `x-device-fingerprint`, `x-device-label`, `x-device-platform`.
+  version: 1.0.0
+  contact:
+    name: BizOpt
+servers:
+  - url: http://localhost:3000
+    description: Local development
+  - url: https://{host}
+    description: Production
+    variables:
+      host:
+        default: app.example.com
+
+tags:
+  - name: Auth
+  - name: Growth
+  - name: Compliance
+  - name: AI
+  - name: Campaigns
+  - name: Publishing
+  - name: Devices
+  - name: Platforms
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    MobileLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        deviceLabel:
+          type: string
+    MobileTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        tokenType:
+          type: string
+          example: Bearer
+        userId:
+          type: string
+        orgId:
+          type: string
+          nullable: true
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+    GrowthDashboard:
+      type: object
+      properties:
+        growthScore:
+          type: integer
+        businessHealthScore:
+          type: integer
+        latestPrediction:
+          type: object
+          nullable: true
+        nextActions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              recommendation:
+                type: string
+              priority:
+                type: string
+    ComplianceSummary:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pass, warn, fail]
+        passCount:
+          type: integer
+        warnCount:
+          type: integer
+        failCount:
+          type: integer
+        checks:
+          type: array
+          items:
+            type: object
+    AiGenerateRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+        tone:
+          type: string
+        goal:
+          type: string
+        industry:
+          type: string
+        audience:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+
+paths:
+  /api/auth/mobile/login:
+    post:
+      tags: [Auth]
+      summary: Mobile login (email + password)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileLoginRequest'
+      responses:
+        '200':
+          description: Tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/mobile/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenResponse'
+
+  /api/auth/mobile/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke refresh session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Session revoked
+
+  /api/auth/mobile/me:
+    get:
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      summary: Current user and workspace
+      responses:
+        '200':
+          description: Profile
+        '401':
+          description: Unauthorized
+
+  /api/growth/snapshot:
+    get:
+      tags: [Growth]
+      security:
+        - bearerAuth: []
+      summary: Growth dashboard snapshot
+      parameters:
+        - name: history
+          in: query
+          schema:
+            type: string
+            enum: ['1']
+      responses:
+        '200':
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthDashboard'
+
+  /api/growth/predict:
+    post:
+      tags: [Growth]
+      security:
+        - bearerAuth: []
+      summary: Run growth prediction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                briefId:
+                  type: string
+                campaignId:
+                  type: string
+      responses:
+        '200':
+          description: Prediction created
+
+  /api/growth/recommendations:
+    get:
+      tags: [Growth]
+      security:
+        - bearerAuth: []
+      summary: List growth recommendations
+      responses:
+        '200':
+          description: Recommendations list
+
+  /api/compliance/run-checks:
+    post:
+      tags: [Compliance]
+      security:
+        - bearerAuth: []
+      summary: Run compliance checks
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceSummary'
+
+  /api/compliance/findings:
+    get:
+      tags: [Compliance]
+      security:
+        - bearerAuth: []
+      summary: Compliance findings
+      responses:
+        '200':
+          description: Findings
+
+  /api/compliance/rules:
+    get:
+      tags: [Compliance]
+      security:
+        - bearerAuth: []
+      summary: Active compliance rules
+      responses:
+        '200':
+          description: Rules
+
+  /api/ai/generate:
+    post:
+      tags: [AI]
+      security:
+        - bearerAuth: []
+      summary: Generate content variants from idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiGenerateRequest'
+      responses:
+        '200':
+          description: Brief and variants
+        '402':
+          description: Trial required
+
+  /api/ai/usage:
+    get:
+      tags: [AI]
+      security:
+        - bearerAuth: []
+      summary: Free tier usage
+      responses:
+        '200':
+          description: Usage stats
+
+  /api/campaigns:
+    get:
+      tags: [Campaigns]
+      security:
+        - bearerAuth: []
+      summary: List campaigns
+      responses:
+        '200':
+          description: Campaign list
+    post:
+      tags: [Campaigns]
+      security:
+        - bearerAuth: []
+      summary: Create campaign
+      responses:
+        '201':
+          description: Created
+
+  /api/publish/schedule:
+    post:
+      tags: [Publishing]
+      security:
+        - bearerAuth: []
+      summary: Schedule campaign posts
+      responses:
+        '200':
+          description: Scheduled
+
+  /api/publish/status:
+    get:
+      tags: [Publishing]
+      security:
+        - bearerAuth: []
+      summary: Publish queue status
+      responses:
+        '200':
+          description: Status
+
+  /api/devices/bind:
+    post:
+      tags: [Devices]
+      security:
+        - bearerAuth: []
+      summary: Bind device to subscription
+      responses:
+        '200':
+          description: Bound
+
+  /api/devices/status:
+    get:
+      tags: [Devices]
+      security:
+        - bearerAuth: []
+      summary: Device binding status
+      responses:
+        '200':
+          description: Status
+
+  /api/platforms/registry:
+    get:
+      tags: [Platforms]
+      security:
+        - bearerAuth: []
+      summary: Enabled platform connectors
+      responses:
+        '200':
+          description: Registry
+
+  /api/analytics:
+    get:
+      tags: [Growth]
+      security:
+        - bearerAuth: []
+      summary: Org analytics summary
+      responses:
+        '200':
+          description: Analytics

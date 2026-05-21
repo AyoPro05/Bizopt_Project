@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { publishToPlatform } from "@/services/integrations";
+import { publishToPlatform } from "@/services/platforms/publish";
 
 export async function schedulePublish(
   orgId: string,
