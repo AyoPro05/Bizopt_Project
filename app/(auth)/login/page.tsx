@@ -33,14 +33,36 @@ export default function LoginPage() {
     <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 shadow-lg">
       <h1 className="font-display text-2xl font-semibold">Welcome back</h1>
       <p className="mt-1 text-sm text-[var(--color-ink-muted)]">Sign in to {APP_NAME}</p>
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+      <form onSubmit={onSubmit} className="mt-6 space-y-4" autoComplete="on">
         <div>
-          <label className="text-sm font-medium">Email</label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
+          <label htmlFor="login-email" className="text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="login-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="mt-1"
+          />
         </div>
         <div>
-          <label className="text-sm font-medium">Password</label>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-1" />
+          <label htmlFor="login-password" className="text-sm font-medium">
+            Password
+          </label>
+          <Input
+            id="login-password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="mt-1"
+          />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" className="w-full">Sign in</Button>

@@ -36,22 +36,66 @@ export default function SignupPage() {
       <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
         {BILLING.trialDisplayPrice} for {BILLING.trialDays} days, then {BILLING.displayPrice}/mo
       </p>
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
+      <form onSubmit={onSubmit} className="mt-6 space-y-4" autoComplete="on">
         <div>
-          <label className="text-sm font-medium">Name</label>
-          <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="mt-1" />
+          <label htmlFor="signup-name" className="text-sm font-medium">
+            Name
+          </label>
+          <Input
+            id="signup-name"
+            name="name"
+            autoComplete="name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            className="mt-1"
+          />
         </div>
         <div>
-          <label className="text-sm font-medium">Workspace</label>
-          <Input value={form.orgName} onChange={(e) => setForm({ ...form, orgName: e.target.value })} placeholder="My business" className="mt-1" />
+          <label htmlFor="signup-org" className="text-sm font-medium">
+            Workspace
+          </label>
+          <Input
+            id="signup-org"
+            name="organization"
+            autoComplete="organization"
+            value={form.orgName}
+            onChange={(e) => setForm({ ...form, orgName: e.target.value })}
+            placeholder="My business"
+            className="mt-1"
+          />
         </div>
         <div>
-          <label className="text-sm font-medium">Email</label>
-          <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="mt-1" />
+          <label htmlFor="signup-email" className="text-sm font-medium">
+            Email
+          </label>
+          <Input
+            id="signup-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+            className="mt-1"
+          />
         </div>
         <div>
-          <label className="text-sm font-medium">Password</label>
-          <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} className="mt-1" />
+          <label htmlFor="signup-password" className="text-sm font-medium">
+            Password
+          </label>
+          <Input
+            id="signup-password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+            minLength={8}
+            className="mt-1"
+          />
+          <p className="mt-1 text-xs text-[var(--color-ink-muted)]">At least 8 characters</p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" className="w-full">Create account</Button>

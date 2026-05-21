@@ -30,6 +30,12 @@ npm run db:seed
 npm run dev
 ```
 
+If pages look unstyled or you see `Cannot find module './XXXX.js'` in the terminal, clear the dev cache and restart:
+
+```bash
+npm run dev:clean
+```
+
 ## Stripe webhooks (local)
 
 ```bash

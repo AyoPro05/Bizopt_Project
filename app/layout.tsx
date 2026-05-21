@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { cookies } from "next/headers";
-import "@/styles/globals.css";
+import "./globals.css";
 import { APP_NAME, APP_TAGLINE, THEME_COOKIE } from "@/lib/constants";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-sans-dm",
 });
 
 const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-display-fraunces",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={htmlClass}>
-      <body className="font-sans">{children}</body>
+      <body className={`${dmSans.className} min-h-screen antialiased`}>{children}</body>
     </html>
   );
 }
