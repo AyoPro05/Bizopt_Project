@@ -20,9 +20,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <Providers>
       <ThemeProvider initialTheme={initialTheme}>
+        {/* Skip to main content link for keyboard navigation */}
+        <a
+          href="#main-content"
+          className="absolute -top-10 left-0 z-50 bg-[var(--color-accent)] text-white px-4 py-2 rounded focus:top-0 transition-all"
+        >
+          Skip to main content
+        </a>
+
         <div className="flex min-h-screen bg-[var(--color-surface)]">
           <Sidebar />
-          <main className="flex-1 overflow-auto">
+          <main
+            id="main-content"
+            className="flex-1 overflow-auto focus-visible:outline-none"
+          >
             <div className="mx-auto max-w-6xl px-6 py-8 md:px-8">{children}</div>
           </main>
         </div>

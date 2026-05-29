@@ -30,7 +30,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   ].join(" ");
 
   return (
-    <html lang="en" className={htmlClass}>
+    <html lang="en" className={htmlClass} suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#0d9488" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#2dd4bf" media="(prefers-color-scheme: dark)" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className={`${dmSans.className} min-h-screen antialiased`}>{children}</body>
     </html>
   );

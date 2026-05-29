@@ -38,20 +38,25 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-ink)]">
+    <aside
+      className="flex h-full w-64 flex-col border-r border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-ink)]"
+      role="navigation"
+      aria-label="Main application navigation"
+    >
       <div className="border-b border-[var(--color-border)] px-6 py-5">
         <Link href="/home" className="font-display text-xl font-semibold tracking-tight">
           {APP_NAME}
         </Link>
         <p className="mt-1 text-xs text-[var(--color-ink-muted)]">AI · Publish · Grow</p>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1 p-3" aria-label="Navigation menu">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
+              aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
                 active
@@ -59,7 +64,7 @@ export function Sidebar() {
                   : "text-[var(--color-ink-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-ink)]"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
               {label}
             </Link>
           );
