@@ -6,17 +6,19 @@ import { DraftAutosaveIndicator } from "@/components/drafts/draft-autosave-indic
 
 export function AppTopbar({ title }: { title?: string }) {
   return (
-    <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-border)] pb-4">
+    <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b shell-divider pb-4">
       <div className="flex items-center gap-3">
         <Link
           href="/home"
-          className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-accent-soft)] px-3 py-2 text-sm font-medium text-[var(--color-accent-hover)] transition hover:opacity-90"
+          className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm font-medium text-[var(--color-ink-muted)] shadow-[var(--shadow-card)] transition-all duration-200 hover:border-[var(--color-border-strong)] hover:text-[var(--color-ink)]"
         >
           <Home className="h-4 w-4" />
           Home
         </Link>
         {title && (
-          <h1 className="font-display text-lg font-semibold text-[var(--color-ink)]">{title}</h1>
+          <h1 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)]">
+            {title}
+          </h1>
         )}
       </div>
       <DraftAutosaveIndicator />

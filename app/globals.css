@@ -1,39 +1,70 @@
 @import "tailwindcss";
 
-/* Tailwind v4: scan app + components (required when CSS lives under app/) */
 @source "../components/**/*.{js,ts,jsx,tsx}";
 @source "./**/*.{js,ts,jsx,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 
+/* Premium B2B palette — warm slate, no pure black */
 @theme {
   --font-display: var(--font-display-fraunces, "Fraunces", Georgia, serif);
   --font-sans: var(--font-sans-dm, "DM Sans", system-ui, sans-serif);
-  --color-ink: #0c1222;
-  --color-ink-muted: #4a5568;
-  --color-surface: #f7f8fc;
+
+  /* Typography */
+  --color-ink: #1e293b;
+  --color-ink-muted: #64748b;
+  --color-ink-subtle: #94a3b8;
+
+  /* Surfaces */
+  --color-surface: #f8fafc;
   --color-card: #ffffff;
+  --color-elevated: #ffffff;
+
+  /* Borders — faint, never harsh */
+  --color-border: #f1f5f9;
+  --color-border-strong: #e2e8f0;
+
+  /* Brand accent (refined teal) */
   --color-accent: #0d9488;
   --color-accent-hover: #0f766e;
-  --color-accent-soft: #ccfbf1;
+  --color-accent-soft: #f0fdfa;
+  --color-accent-muted: #ccfbf1;
+
+  /* Nav active (Linear-style soft shift) */
+  --color-nav-active-bg: #f1f5f9;
+  --color-nav-active-text: #1e293b;
+
+  /* Semantic */
   --color-warm: #ea580c;
-  --color-border: #e2e8f0;
   --color-danger: #dc2626;
   --color-success: #16a34a;
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-card-hover: 0 4px 6px -1px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --shadow-elevated: 0 10px 15px -3px rgb(15 23 42 / 0.06), 0 4px 6px -4px rgb(15 23 42 / 0.04);
 }
 
 .dark {
   --color-ink: #f1f5f9;
   --color-ink-muted: #94a3b8;
+  --color-ink-subtle: #64748b;
   --color-surface: #0f172a;
   --color-card: #1e293b;
+  --color-elevated: #1e293b;
+  --color-border: #334155;
+  --color-border-strong: #475569;
   --color-accent: #2dd4bf;
   --color-accent-hover: #14b8a6;
   --color-accent-soft: #134e4a;
-  --color-border: #334155;
+  --color-accent-muted: #115e59;
+  --color-nav-active-bg: #334155;
+  --color-nav-active-text: #f8fafc;
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.2), 0 1px 3px 0 rgb(0 0 0 / 0.15);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
 }
 
-/* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -45,7 +76,6 @@
   }
 }
 
-/* Animation keyframes */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -97,12 +127,20 @@
     color-scheme: light dark;
   }
   body {
-    @apply min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)] font-sans;
+    @apply min-h-screen font-sans;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
   }
   a {
-    @apply transition-colors;
+    @apply transition-colors duration-200;
   }
-  /* Improve focus indicators */
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+  }
   *:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
@@ -113,12 +151,79 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Page + card system */
+  .surface-page {
+    background-color: var(--color-surface);
+  }
+  .card-elevated {
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 60%, transparent);
+    background-color: var(--color-card);
+    box-shadow: var(--shadow-card);
+  }
+  .card-elevated:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .card-panel {
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 55%, transparent);
+    background-color: var(--color-card);
+    box-shadow: var(--shadow-card);
+  }
+  .interactive-tile {
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 55%, transparent);
+    background-color: var(--color-card);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 200ms ease, border-color 200ms ease, background-color 200ms ease;
+  }
+  .interactive-tile:hover {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-elevated);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* Marketing header */
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-[var(--color-border)];
+    background-color: color-mix(in srgb, var(--color-card) 85%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border-strong) 50%, transparent);
   }
   .dark .glass {
-    @apply bg-slate-900/80;
+    background-color: color-mix(in srgb, var(--color-card) 90%, transparent);
   }
+
+  /* Shell chrome */
+  .shell-divider {
+    border-color: color-mix(in srgb, var(--color-border-strong) 45%, transparent);
+  }
+  .nav-item {
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200;
+    color: var(--color-ink-muted);
+  }
+  .nav-item:hover {
+    background-color: color-mix(in srgb, var(--color-nav-active-bg) 70%, transparent);
+    color: var(--color-ink);
+  }
+  .nav-item-active {
+    background-color: var(--color-nav-active-bg);
+    color: var(--color-nav-active-text);
+    font-weight: 500;
+    box-shadow: var(--shadow-card);
+  }
+  .nav-item-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 1.25rem;
+    width: 3px;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    background-color: var(--color-accent);
+  }
+
   .animate-spin-fast {
     animation: spin 0.6s linear infinite;
   }
@@ -126,7 +231,12 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   .animate-shimmer {
-    background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      transparent 100%
+    );
     background-size: 1000px 100%;
     animation: shimmer 2s infinite;
   }
@@ -136,7 +246,6 @@
   .animate-slide-up {
     animation: slideUp 250ms cubic-bezier(0.33, 0.66, 0.66, 1);
   }
-  /* Screen reader only content */
   .sr-only {
     position: absolute;
     width: 1px;

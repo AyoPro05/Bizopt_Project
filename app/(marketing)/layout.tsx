@@ -3,8 +3,8 @@ import { APP_NAME } from "@/lib/constants";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
-      <header className="glass sticky top-0 z-50 border-b">
+    <div className="surface-page min-h-screen">
+      <header className="glass sticky top-0 z-50">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="font-display text-xl font-semibold text-[var(--color-ink)]">
             {APP_NAME}

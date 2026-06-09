@@ -151,28 +151,28 @@ export default async function HomePage() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/ai-studio"
-            className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-4 transition hover:bg-[var(--color-surface)]"
+            className="interactive-tile flex items-center gap-3 p-4"
           >
             <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
             <span className="text-sm font-medium">AI Studio</span>
           </Link>
           <Link
             href="/campaigns/new"
-            className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-4 transition hover:bg-[var(--color-surface)]"
+            className="interactive-tile flex items-center gap-3 p-4"
           >
             <Megaphone className="h-5 w-5 text-[var(--color-accent)]" />
             <span className="text-sm font-medium">New campaign</span>
           </Link>
           <Link
             href="/calendar"
-            className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-4 transition hover:bg-[var(--color-surface)]"
+            className="interactive-tile flex items-center gap-3 p-4"
           >
             <Calendar className="h-5 w-5 text-[var(--color-accent)]" />
             <span className="text-sm font-medium">Calendar</span>
           </Link>
           <Link
             href="/billing"
-            className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-4 transition hover:bg-[var(--color-surface)]"
+            className="interactive-tile flex items-center gap-3 p-4"
           >
             <CreditCard className="h-5 w-5 text-[var(--color-accent)]" />
             <span className="text-sm font-medium">Billing</span>

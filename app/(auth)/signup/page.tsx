@@ -31,7 +31,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 shadow-lg">
+    <div className="card-panel p-8 shadow-[var(--shadow-elevated)]">
       <h1 className="font-display text-2xl font-semibold">Create your workspace</h1>
       <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
         {BILLING.trialDisplayPrice} for {BILLING.trialDays} days, then {BILLING.displayPrice}/mo

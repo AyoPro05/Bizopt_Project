@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           Skip to main content
         </a>
 
-        <div className="flex min-h-screen bg-[var(--color-surface)]">
+        <div className="surface-page flex min-h-screen">
           <Sidebar />
           <main
             id="main-content"

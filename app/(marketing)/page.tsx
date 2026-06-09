@@ -64,13 +64,13 @@ export default function HomePage() {
             <div className="mt-10 flex flex-wrap gap-4">
               <Link
                 href="/signup"
-                className="rounded-xl bg-[var(--color-accent)] px-6 py-3 font-medium text-white shadow-lg hover:bg-[var(--color-accent-hover)]"
+                className="rounded-lg bg-[var(--color-accent)] px-6 py-3 font-medium text-white shadow-[var(--shadow-card)] transition-all duration-200 hover:bg-[var(--color-accent-hover)] hover:shadow-[var(--shadow-card-hover)]"
               >
                 Get started — {BILLING.displayPrice}/mo
               </Link>
               <Link
                 href="/pricing"
-                className="rounded-xl border border-[var(--color-border)] bg-white px-6 py-3 font-medium hover:bg-[var(--color-surface)]"
+                className="rounded-lg border border-[color-mix(in_srgb,var(--color-border-strong)_55%,transparent)] bg-[var(--color-card)] px-6 py-3 font-medium text-[var(--color-ink)] shadow-[var(--shadow-card)] transition-all duration-200 hover:border-[var(--color-border-strong)] hover:shadow-[var(--shadow-card-hover)]"
               >
                 See pricing
               </Link>
@@ -79,7 +79,7 @@ export default function HomePage() {
 
           <div className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[var(--color-accent-soft)] via-transparent to-amber-100/40 blur-2xl" />
-            <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-2xl shadow-[var(--color-accent)]/10 ring-1 ring-black/5">
+            <div className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--color-border-strong)_55%,transparent)] bg-[var(--color-card)] shadow-[var(--shadow-elevated)]">
               <Image
                 src="/images/hero-bizopt.png"
                 alt="BizOpt dashboard with subscriber analytics, Stripe payment success, and AI Studio publishing to social networks"
