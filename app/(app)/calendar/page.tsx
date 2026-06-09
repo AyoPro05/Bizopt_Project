@@ -1,10 +1,14 @@
 import { getServerSession } from "next-auth";
+import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { getUserPrimaryOrg } from "@/lib/permissions";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
 import { formatDateTime } from "@/lib/dates";
+import { CalendarDays } from "lucide-react";
 
 export default async function CalendarPage() {
   const session = await getServerSession(authOptions);
@@ -34,9 +38,16 @@ export default async function CalendarPage() {
 
       <div className="mt-8 space-y-8">
         {Object.keys(byDate).length === 0 ? (
-          <Card>
-            <p className="text-sm text-[var(--color-ink-muted)]">Nothing scheduled yet.</p>
-          </Card>
+          <EmptyState
+            icon={<CalendarDays className="h-7 w-7" />}
+            title="Schedule your first post"
+            description="Create a campaign in AI Studio, choose your channels, and drop posts directly into your publishing calendar."
+            action={
+              <Link href="/ai-studio">
+                <Button>Generate Content Pack</Button>
+              </Link>
+            }
+          />
         ) : (
           Object.entries(byDate).map(([date, dayPosts]) => (
             <section key={date}>

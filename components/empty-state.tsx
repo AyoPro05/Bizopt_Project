@@ -23,23 +23,17 @@ export function EmptyState({
   className = "",
 }: EmptyStateProps) {
   return (
-    <div
-      className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}
-    >
-      {icon ? (
-        <div className="mb-4 text-slate-400 dark:text-slate-500">{icon}</div>
-      ) : (
-        <Inbox className="w-12 h-12 mb-4 text-slate-300 dark:text-slate-700" />
-      )}
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-        {title}
-      </h3>
+    <div className={`card-panel flex flex-col items-center justify-center px-6 py-12 text-center ${className}`}>
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-surface)] text-[var(--color-ink-subtle)]">
+        {icon ?? <Inbox className="h-7 w-7" />}
+      </div>
+      <h3 className="font-display text-xl font-semibold text-[var(--color-ink)]">{title}</h3>
       {description && (
-        <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm">
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--color-ink-muted)]">
           {description}
         </p>
       )}
-      {action && <div>{action}</div>}
+      {action && <div className="mt-6">{action}</div>}
     </div>
   );
 }
@@ -56,7 +50,7 @@ export function EmptySearchState({
 }) {
   return (
     <EmptyState
-      icon={<Search className="w-12 h-12" />}
+      icon={<Search className="h-7 w-7" />}
       title="No results found"
       description={
         query ? `No results for "${query}". Try different keywords.` : undefined
@@ -80,7 +74,7 @@ export function EmptyListState({
 }) {
   return (
     <EmptyState
-      icon={<Inbox className="w-12 h-12" />}
+      icon={<Inbox className="h-7 w-7" />}
       title={title}
       description={description}
       action={action}
@@ -102,7 +96,7 @@ export function EmptyErrorState({
 }) {
   return (
     <EmptyState
-      icon={<AlertCircle className="w-12 h-12 text-red-500" />}
+      icon={<AlertCircle className="h-7 w-7 text-[var(--color-danger)]" />}
       title={title}
       description={description}
       action={action}

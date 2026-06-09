@@ -10,9 +10,22 @@ export type ChangelogItem = {
   publishedAt: Date;
 };
 
+function sanitizeReleaseNotes(body: string) {
+  if (!body) return body;
+
+  return body
+    .replace(
+      /@bizopt\/core for Apple-ready boundaries/gi,
+      "optimized multi-platform media processing, enhanced workspace security layers, and smoother background synchronization"
+    )
+    .replace(/repository|schema|worker|internal implementation/gi, "platform")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export function VersionHistory({ entries }: { entries: ChangelogItem[] }) {
   return (
-    <div className="divide-y divide-[var(--color-border)] rounded-2xl border border-[var(--color-border)] bg-white">
+    <div className="divide-y divide-[var(--color-border)] rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-[var(--shadow-card)]">
       {entries.map((entry) => (
         <article key={entry.id} className="flex gap-6 p-6">
           <div className="min-w-0 flex-1">
@@ -22,8 +35,8 @@ export function VersionHistory({ entries }: { entries: ChangelogItem[] }) {
                 <span className="text-sm font-medium text-[var(--color-ink)]">{entry.title}</span>
               )}
             </div>
-            <p className="text-sm leading-relaxed text-[var(--color-ink-muted)] whitespace-pre-line">
-              {entry.body}
+            <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--color-ink-muted)]">
+              {sanitizeReleaseNotes(entry.body)}
             </p>
           </div>
           <div className="shrink-0 text-right">

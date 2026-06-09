@@ -6,8 +6,9 @@ import { listCampaigns } from "@/services/campaigns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
 import { formatDateTime } from "@/lib/dates";
-import { Plus } from "lucide-react";
+import { FolderKanban, Plus } from "lucide-react";
 
 export default async function CampaignsPage() {
   const session = await getServerSession(authOptions);
@@ -34,11 +35,16 @@ export default async function CampaignsPage() {
 
       <div className="mt-8 space-y-4">
         {campaigns.length === 0 ? (
-          <Card>
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              No campaigns yet. Create your first multi-platform post.
-            </p>
-          </Card>
+          <EmptyState
+            icon={<FolderKanban className="h-7 w-7" />}
+            title="Launch your first campaign"
+            description="Generate a complete AI content pack, tailor variants per platform, and publish from one workflow."
+            action={
+              <Link href="/ai-studio">
+                <Button>Create Campaign in AI Studio</Button>
+              </Link>
+            }
+          />
         ) : (
           campaigns.map((c) => (
             <Link key={c.id} href={`/campaigns/${c.id}`}>

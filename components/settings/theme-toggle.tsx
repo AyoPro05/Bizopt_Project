@@ -14,12 +14,14 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div>
+    <div className="grid gap-4">
+      <div className="space-y-1">
         <p className="font-medium text-[var(--color-ink)]">Appearance</p>
-        <p className="text-sm text-[var(--color-ink-muted)]">Light, dark, or match your device</p>
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          Choose light, dark, or automatically match your device.
+        </p>
       </div>
-      <div className="flex rounded-xl border border-[var(--color-border)] p-1">
+      <div className="inline-flex w-fit rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-[var(--shadow-card)]">
         {options.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
@@ -28,7 +30,7 @@ export function ThemeToggle() {
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
               theme === value
-                ? "bg-[var(--color-accent)] text-white"
+                ? "bg-[var(--color-card)] text-[var(--color-ink)] shadow-[var(--shadow-card)]"
                 : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
             )}
           >
