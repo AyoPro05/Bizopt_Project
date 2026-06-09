@@ -4,6 +4,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/helpers";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { sendVerificationEmail } from "@/lib/email";
+import crypto from "crypto";
 
 const schema = z.object({
   name: z.string().min(1).max(100),
@@ -81,5 +83,36 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ ok: true, userId: user.id }, { status: 201 });
+  // Generate verification token
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+  await db.verificationToken.create({
+    data: {
+      identifier: email,
+      token: verificationToken,
+      expires: expiresAt,
+    },
+  });
+
+  // Send verification email
+  const emailResult = await sendVerificationEmail({
+    email,
+    userName: parsed.data.name,
+    verificationToken,
+  });
+
+  if (!emailResult.success) {
+    console.warn("Failed to send verification email:", emailResult.error);
+    // Don't fail signup if email fails - user can try resending
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      userId: user.id,
+      message: "Account created. Please check your email to verify your account.",
+    },
+    { status: 201 }
+  );
 }
