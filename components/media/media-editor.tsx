@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FallbackImage } from "@/components/ui/fallback-image";
 import { Scissors, Crop } from "lucide-react";
 
 type Asset = {
@@ -32,11 +33,13 @@ export function MediaEditor({ asset, initialEdits = [] }: Props) {
   const [cropW, setCropW] = useState(1080);
   const [cropH, setCropH] = useState(1080);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [lastOperation, setLastOperation] = useState<"trim" | "crop" | null>(null);
 
   async function saveEdit(operation: "trim" | "crop", params: Record<string, unknown>) {
     setSaving(true);
-    setMessage("");
+    setMessage(null);
+    setLastOperation(operation);
     const res = await fetch(`/api/media/${asset.id}/edits`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -45,11 +48,21 @@ export function MediaEditor({ asset, initialEdits = [] }: Props) {
     const data = await res.json();
     setSaving(false);
     if (!res.ok) {
-      setMessage(data.error ?? "Edit failed");
+      setMessage({ type: "error", text: data.error ?? "Edit failed" });
       return;
     }
     setEdits((prev) => [data.edit, ...prev]);
-    setMessage(`${operation} saved (v${data.edit.version})`);
+    setMessage({ type: "success", text: `${operation} saved (v${data.edit.version})` });
+  }
+
+  async function retryLastEdit() {
+    if (lastOperation === "trim") {
+      await saveEdit("trim", { startMs, endMs });
+      return;
+    }
+    if (lastOperation === "crop") {
+      await saveEdit("crop", { width: cropW, height: cropH, x: 0, y: 0 });
+    }
   }
 
   const isVisual = asset.type === "image" || asset.type === "video";
@@ -61,8 +74,11 @@ export function MediaEditor({ asset, initialEdits = [] }: Props) {
           asset.type === "video" ? (
             <video src={asset.url} controls className="aspect-video w-full bg-black" />
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={asset.url} alt={asset.filename ?? "Media"} className="w-full object-cover" />
+            <FallbackImage
+              src={asset.url}
+              alt={asset.filename ?? "Media"}
+              className="w-full object-cover"
+            />
           )
         ) : (
           <div className="flex aspect-video items-center justify-center bg-[var(--color-surface)]">
@@ -103,7 +119,7 @@ export function MediaEditor({ asset, initialEdits = [] }: Props) {
             disabled={saving}
             onClick={() => saveEdit("trim", { startMs, endMs })}
           >
-            Apply trim
+            {saving ? "Saving..." : "Apply trim"}
           </Button>
         </Card>
 
@@ -138,12 +154,31 @@ export function MediaEditor({ asset, initialEdits = [] }: Props) {
               disabled={saving}
               onClick={() => saveEdit("crop", { width: cropW, height: cropH, x: 0, y: 0 })}
             >
-              Apply crop
+              {saving ? "Saving..." : "Apply crop"}
             </Button>
           </Card>
         )}
 
-        {message && <p className="text-sm text-emerald-600">{message}</p>}
+        {message && (
+          <div
+            className={
+              message.type === "success"
+                ? "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                : "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            }
+          >
+            <p>{message.text}</p>
+            {message.type === "error" && (
+              <button
+                type="button"
+                onClick={() => void retryLastEdit()}
+                className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        )}
 
         {edits.length > 0 && (
           <Card>

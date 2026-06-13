@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { Providers } from "@/app/providers";
 import { Sidebar } from "@/components/shell/sidebar";
+import { SectionErrorBoundary } from "@/components/errors/section-error-boundary";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { getUserTheme } from "@/lib/theme";
 import type { ThemeSetting } from "@/components/theme/theme-provider";
@@ -34,7 +35,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             id="main-content"
             className="flex-1 overflow-auto focus-visible:outline-none"
           >
-            <div className="mx-auto max-w-6xl px-6 py-8 md:px-8">{children}</div>
+            <div className="mx-auto max-w-6xl px-6 py-8 md:px-8">
+              <SectionErrorBoundary>{children}</SectionErrorBoundary>
+            </div>
           </main>
         </div>
       </ThemeProvider>

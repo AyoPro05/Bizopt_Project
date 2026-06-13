@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 import { BILLING } from "@/lib/constants";
 import {
   Calendar,
@@ -80,8 +80,9 @@ export default function HomePage() {
           <div className="relative">
             <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[var(--color-accent-soft)] via-transparent to-amber-100/40 blur-2xl" />
             <div className="relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--color-border-strong)_55%,transparent)] bg-[var(--color-card)] shadow-[var(--shadow-elevated)]">
-              <Image
+              <SafeImage
                 src="/images/hero-bizopt.png"
+                fallbackSrc="/images/image-placeholder.svg"
                 alt="BizOpt dashboard with subscriber analytics, Stripe payment success, and AI Studio publishing to social networks"
                 width={1400}
                 height={788}

@@ -25,12 +25,18 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
   const [selectedAudio, setSelectedAudio] = useState("");
   const [volume] = useState(1);
   const [startMs, setStartMs] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingLayers, setLoadingLayers] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setLoadingLayers(true);
+    setError(null);
     const res = await fetch(`/api/media/${mediaAssetId}/audio-layers`);
-    const data = await res.json();
-    if (res.ok) setLayers(data.layers);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) setLayers(data.layers ?? []);
+    else setError(data.error ?? "Unable to load audio layers");
+    setLoadingLayers(false);
   }, [mediaAssetId]);
 
   useEffect(() => {
@@ -39,31 +45,45 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
 
   async function addLayer() {
     if (!selectedAudio) return;
-    setLoading(true);
+    setSaving(true);
+    setError(null);
     const res = await fetch(`/api/media/${mediaAssetId}/audio-layers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ audioAssetId: selectedAudio, startMs, volume }),
     });
-    setLoading(false);
+    setSaving(false);
     if (res.ok) {
       setSelectedAudio("");
       await load();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Unable to add audio layer");
     }
   }
 
   async function updateLayer(layerId: string, patch: Partial<{ volume: number; startMs: number }>) {
-    await fetch(`/api/media/audio-layers/${layerId}`, {
+    setError(null);
+    const res = await fetch(`/api/media/audio-layers/${layerId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
     });
-    await load();
+    if (res.ok) await load();
+    else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Unable to update layer");
+    }
   }
 
   async function removeLayer(layerId: string) {
-    await fetch(`/api/media/audio-layers/${layerId}`, { method: "DELETE" });
-    await load();
+    setError(null);
+    const res = await fetch(`/api/media/audio-layers/${layerId}`, { method: "DELETE" });
+    if (res.ok) await load();
+    else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Unable to remove layer");
+    }
   }
 
   return (
@@ -76,7 +96,22 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
         Stack voiceovers or music on video — synced to your timeline
       </p>
 
-      {layers.length > 0 && (
+      {error && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {loadingLayers ? (
+        <p className="mt-4 text-sm text-[var(--color-ink-muted)]">Loading audio layers...</p>
+      ) : layers.length > 0 ? (
         <ul className="mt-4 space-y-3">
           {layers.map((layer) => (
             <li
@@ -107,6 +142,10 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
             </li>
           ))}
         </ul>
+      ) : (
+        <p className="mt-4 text-sm text-[var(--color-ink-muted)]">
+          No audio layers yet. Add a track to enrich this media asset.
+        </p>
       )}
 
       {audioAssets.length > 0 && (
@@ -130,7 +169,7 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
             onChange={(e) => setStartMs(Number(e.target.value))}
             className="w-28 rounded-lg border px-3 py-2 text-sm"
           />
-          <Button type="button" disabled={loading || !selectedAudio} onClick={addLayer}>
+          <Button type="button" disabled={saving || !selectedAudio} onClick={addLayer}>
             Add layer
           </Button>
         </div>

@@ -17,21 +17,59 @@ type Props = {
 
 export function PlatformSelector({ value, onChange }: Props) {
   const [platforms, setPlatforms] = useState<PlatformEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadPlatforms() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/platforms/registry");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Unable to load platforms");
+      setPlatforms(data.platforms ?? []);
+    } catch (err) {
+      setPlatforms([]);
+      setError(err instanceof Error ? err.message : "Unable to load platforms");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    fetch("/api/platforms/registry")
-      .then((r) => r.json())
-      .then((d) => setPlatforms(d.platforms ?? []))
-      .catch(() => setPlatforms([]));
+    void loadPlatforms();
   }, []);
 
   function toggle(key: string) {
     onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
   }
 
+  if (loading) {
+    return (
+      <p className="text-sm text-[var(--color-ink-muted)]">Loading platform options...</p>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-red-700">{error}</p>
+        <button
+          type="button"
+          onClick={() => void loadPlatforms()}
+          className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface)]"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   if (platforms.length === 0) {
     return (
-      <p className="text-sm text-[var(--color-ink-muted)]">Loading platforms…</p>
+      <p className="text-sm text-[var(--color-ink-muted)]">
+        No publishing platforms are available yet.
+      </p>
     );
   }
 

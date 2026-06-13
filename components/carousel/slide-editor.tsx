@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { FallbackImage } from "@/components/ui/fallback-image";
 
 export type Slide = {
   id: string;
@@ -23,9 +24,11 @@ export function SlideEditor({ campaignId, slide, assets, onUpdated }: Props) {
   const [caption, setCaption] = useState(slide.caption ?? "");
   const [mediaAssetId, setMediaAssetId] = useState(slide.mediaAsset?.id ?? "");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function saveSlide() {
     setSaving(true);
+    setError(null);
     const res = await fetch(`/api/campaigns/${campaignId}/carousel/${slide.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -36,16 +39,19 @@ export function SlideEditor({ campaignId, slide, assets, onUpdated }: Props) {
     });
     setSaving(false);
     if (res.ok) onUpdated();
+    else {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Unable to save this slide");
+    }
   }
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex gap-4">
         {slide.mediaAsset ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <FallbackImage
             src={slide.mediaAsset.url}
-            alt=""
+            alt={slide.mediaAsset.filename ?? "Slide media"}
             className="h-20 w-20 rounded-lg object-cover"
           />
         ) : (
@@ -78,8 +84,9 @@ export function SlideEditor({ campaignId, slide, assets, onUpdated }: Props) {
         </div>
       </div>
       <Button className="mt-3" variant="secondary" disabled={saving} onClick={saveSlide}>
-        {saving ? "Saving…" : "Save slide"}
+        {saving ? "Saving..." : "Save slide"}
       </Button>
+      {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
     </div>
   );
 }

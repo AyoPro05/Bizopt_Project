@@ -1,31 +1,25 @@
 import Link from "next/link";
+import { ErrorFallback } from "@/components/errors/error-fallback";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
-      <div className="text-center max-w-md">
-        <div className="mb-6">
-          <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-500 mb-4">
-            404
-          </h1>
-          <p className="text-xl font-semibold text-slate-100 mb-2">
-            Page not found
-          </p>
-          <p className="text-slate-400 mb-6">
-            The page you&apos;re looking for doesn&apos;t exist or has been moved.
-          </p>
-        </div>
-
-        <div className="space-y-3">
+    <div className="surface-page flex min-h-screen items-center justify-center px-4">
+      <div className="w-full max-w-xl">
+        <ErrorFallback
+          title="Page not found"
+          description="That route does not exist. You can return home and continue working."
+          showHomeLink={false}
+        />
+        <div className="mt-4 flex justify-center gap-3">
           <Link
             href="/home"
-            className="w-full block px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-teal-500/50 transition-all"
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-accent-hover)]"
           >
             Go to Home
           </Link>
           <Link
             href="/"
-            className="w-full block px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition-colors"
+            className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-card)] px-4 py-2 text-sm font-medium text-[var(--color-ink)] transition hover:bg-[var(--color-surface)]"
           >
             Back to Landing
           </Link>

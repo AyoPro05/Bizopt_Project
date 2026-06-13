@@ -27,7 +27,7 @@ export function CampaignBuilder({ campaign, assets }: Props) {
   const [caption, setCaption] = useState(campaign.caption ?? "");
   const [platforms, setPlatforms] = useState(campaign.platforms);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const supportsCarousel = platforms.some((p) =>
     ["instagram", "facebook"].includes(p)
@@ -35,15 +35,19 @@ export function CampaignBuilder({ campaign, assets }: Props) {
 
   async function save() {
     setSaving(true);
-    setMessage("");
+    setMessage(null);
     const res = await fetch(`/api/campaigns/${campaign.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, caption, platforms }),
     });
     setSaving(false);
-    if (res.ok) setMessage("Campaign saved");
-    else setMessage("Save failed");
+    if (res.ok) {
+      setMessage({ type: "success", text: "Campaign saved." });
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setMessage({ type: "error", text: data.error ?? "Save failed. Please retry." });
+    }
   }
 
   return (
@@ -85,7 +89,17 @@ export function CampaignBuilder({ campaign, assets }: Props) {
               Open media library
             </Link>
           </div>
-          {message && <p className="text-sm text-emerald-600">{message}</p>}
+          {message && (
+            <p
+              className={
+                message.type === "success"
+                  ? "text-sm text-emerald-700"
+                  : "text-sm text-red-700"
+              }
+            >
+              {message.text}
+            </p>
+          )}
         </div>
       </Card>
 

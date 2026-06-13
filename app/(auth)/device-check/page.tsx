@@ -24,39 +24,47 @@ export default function DeviceCheckPage() {
 
   useEffect(() => {
     async function check() {
-      const browser = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
-        ? "Safari"
-        : /Chrome/.test(navigator.userAgent)
-        ? "Chrome"
-        : /Firefox/.test(navigator.userAgent)
-        ? "Firefox"
-        : "Browser";
-      const platform = /Mac/i.test(navigator.userAgent)
-        ? "Mac"
-        : /Windows/i.test(navigator.userAgent)
-        ? "Windows"
-        : /iPhone|iPad|iPod/i.test(navigator.userAgent)
-        ? "iOS"
-        : /Android/i.test(navigator.userAgent)
-        ? "Android"
-        : "Device";
-      setSessionLabel(`${platform} · ${browser}`);
+      try {
+        const browser = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
+          ? "Safari"
+          : /Chrome/.test(navigator.userAgent)
+          ? "Chrome"
+          : /Firefox/.test(navigator.userAgent)
+          ? "Firefox"
+          : "Browser";
+        const platform = /Mac/i.test(navigator.userAgent)
+          ? "Mac"
+          : /Windows/i.test(navigator.userAgent)
+          ? "Windows"
+          : /iPhone|iPad|iPod/i.test(navigator.userAgent)
+          ? "iOS"
+          : /Android/i.test(navigator.userAgent)
+          ? "Android"
+          : "Device";
+        setSessionLabel(`${platform} · ${browser}`);
 
-      const fp = getFingerprint();
-      const res = await fetch(`/api/devices/status?fingerprint=${encodeURIComponent(fp)}`);
-      const data = await res.json();
-      if (data.bound && data.entitlementActive) {
-        router.replace("/home");
-        return;
+        const fp = getFingerprint();
+        const res = await fetch(`/api/devices/status?fingerprint=${encodeURIComponent(fp)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error ?? "Unable to verify this session.");
+        }
+        if (data.bound && data.entitlementActive) {
+          router.replace("/home");
+          return;
+        }
+        if (data.bound) {
+          setStatus("done");
+          setMessage("Session recognized. Continue to billing to complete activation.");
+          return;
+        }
+        setStatus("binding");
+      } catch (err) {
+        setStatus("error");
+        setMessage(err instanceof Error ? err.message : "Unable to verify this session.");
       }
-      if (data.bound) {
-        setStatus("done");
-        setMessage("Session recognized. Continue to billing to complete activation.");
-        return;
-      }
-      setStatus("binding");
     }
-    check();
+    void check();
   }, [router]);
 
   async function bindDevice() {
@@ -131,8 +139,13 @@ export default function DeviceCheckPage() {
       {message && <p className="mt-4 text-center text-sm text-[var(--color-ink-muted)]">{message}</p>}
 
       <div className="mt-6 flex flex-col gap-3">
+        {status === "error" && (
+          <Button variant="secondary" onClick={() => window.location.reload()}>
+            Retry session check
+          </Button>
+        )}
         {status !== "done" && (
-          <Button onClick={bindDevice} disabled={status === "checking"}>
+          <Button onClick={bindDevice} disabled={status === "checking" || status === "binding"}>
             {status === "binding" ? "Authorizing..." : "Authorize this session"}
           </Button>
         )}

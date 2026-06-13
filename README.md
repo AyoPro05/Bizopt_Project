@@ -42,6 +42,32 @@ npm run dev:clean
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
+## Sentry setup (client + server)
+
+1. Create a Next.js project in Sentry and copy your DSN.
+2. Set env vars in `.env`:
+
+```bash
+SENTRY_DSN="https://<key>@o<org>.ingest.sentry.io/<project>"
+NEXT_PUBLIC_SENTRY_DSN="$SENTRY_DSN"
+SENTRY_ENVIRONMENT="development"
+```
+
+3. Restart dev server (`npm run dev`).
+4. Trigger a test server error:
+
+```bash
+curl -i http://localhost:3000/api/debug-sentry
+```
+
+5. Trigger a test message:
+
+```bash
+curl -X POST http://localhost:3000/api/debug-sentry
+```
+
+6. Verify in Sentry Issues/Events dashboard.
+
 ## Project layout
 
 | Path | Role |

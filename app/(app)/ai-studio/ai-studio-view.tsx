@@ -25,37 +25,51 @@ export function AiStudioView() {
   const [variants, setVariants] = useState<VariantItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [loadingBrief, setLoadingBrief] = useState(false);
+  const [loadingUsage, setLoadingUsage] = useState(true);
   const [remainingFree, setRemainingFree] = useState<number | undefined>(undefined);
 
   const loadBrief = useCallback(async (id: string) => {
-    const res = await fetch(`/api/ai/briefs?id=${id}`);
-    const data = await res.json();
-    if (data.brief) {
-      setPrompt(data.brief.prompt);
-      setTone(data.brief.tone ?? "professional");
-      const g = data.brief.goals as {
-        goal?: string;
-        industry?: string;
-        audience?: string;
-        platforms?: string[];
-      } | null;
-      if (g?.goal) setGoal(g.goal);
-      if (g?.industry) setIndustry(g.industry);
-      if (g?.audience) setAudience(g.audience);
-      if (g?.platforms?.length) setPlatforms(g.platforms);
-      setBriefId(data.brief.id);
-      const v = data.brief.variants.map(
-        (x: { id: string; type: string; title: string | null; body: string; isSelected: boolean }) => ({
-          id: x.id,
-          type: x.type,
-          title: x.title,
-          body: x.body,
-          isSelected: x.isSelected,
-        })
-      );
-      setVariants(v);
-      const sel = v.find((x: VariantItem) => x.isSelected) ?? v[0];
-      setSelectedId(sel?.id ?? null);
+    setLoadingBrief(true);
+    setLoadError("");
+    try {
+      const res = await fetch(`/api/ai/briefs?id=${id}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Unable to load this draft");
+      if (data.brief) {
+        setPrompt(data.brief.prompt);
+        setTone(data.brief.tone ?? "professional");
+        const g = data.brief.goals as {
+          goal?: string;
+          industry?: string;
+          audience?: string;
+          platforms?: string[];
+        } | null;
+        if (g?.goal) setGoal(g.goal);
+        if (g?.industry) setIndustry(g.industry);
+        if (g?.audience) setAudience(g.audience);
+        if (g?.platforms?.length) setPlatforms(g.platforms);
+        setBriefId(data.brief.id);
+        const v = data.brief.variants.map(
+          (x: { id: string; type: string; title: string | null; body: string; isSelected: boolean }) => ({
+            id: x.id,
+            type: x.type,
+            title: x.title,
+            body: x.body,
+            isSelected: x.isSelected,
+          })
+        );
+        setVariants(v);
+        const sel = v.find((x: VariantItem) => x.isSelected) ?? v[0];
+        setSelectedId(sel?.id ?? null);
+      } else {
+        setLoadError("Draft not found.");
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Unable to load draft.");
+    } finally {
+      setLoadingBrief(false);
     }
   }, []);
 
@@ -64,6 +78,7 @@ export function AiStudioView() {
   }, [briefParam, loadBrief]);
 
   useEffect(() => {
+    setLoadingUsage(true);
     fetch("/api/ai/usage")
       .then((r) => r.json())
       .then((d) => {
@@ -71,7 +86,8 @@ export function AiStudioView() {
           setRemainingFree(d.remainingFree);
         }
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setLoadingUsage(false));
   }, []);
 
   useDraftAutosaveLoop(
@@ -127,8 +143,13 @@ export function AiStudioView() {
   }
 
   async function selectVariant(id: string) {
+    setError("");
     setSelectedId(id);
-    await fetch(`/api/ai/variants/${id}`, { method: "PATCH" });
+    const res = await fetch(`/api/ai/variants/${id}`, { method: "PATCH" });
+    if (!res.ok) {
+      setError("Could not select this variant right now.");
+      return;
+    }
     setVariants((prev) => prev.map((v) => ({ ...v, isSelected: v.id === id })));
   }
 
@@ -158,6 +179,25 @@ export function AiStudioView() {
         onPlatformsChange={setPlatforms}
         onGenerate={generate}
       />
+
+      {(loadingBrief || loadingUsage) && (
+        <p className="mt-4 text-sm text-[var(--color-ink-muted)]">Loading workspace context...</p>
+      )}
+
+      {loadError && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p>{loadError}</p>
+          {briefId && (
+            <button
+              type="button"
+              className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+              onClick={() => void loadBrief(briefId)}
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
 
       {error && (
         <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
