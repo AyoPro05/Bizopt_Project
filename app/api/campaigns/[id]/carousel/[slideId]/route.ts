@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getApiContext } from "@/lib/api-context";
 import { updateCarouselSlide, deleteCarouselSlide } from "@/services/media/carousel";
 import { safeJson } from "@/lib/helpers";
+
+const patchSlideSchema = z
+  .object({
+    caption: z.string().max(5000).optional(),
+    mediaAssetId: z.string().min(1).nullable().optional(),
+    sortOrder: z.number().int().min(0).max(200).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one field is required.",
+  });
 
 export async function PATCH(
   req: Request,
@@ -17,8 +28,11 @@ export async function PATCH(
     mediaAssetId?: string | null;
     sortOrder?: number;
   }>(req);
-  if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
-  await updateCarouselSlide(ctx.org.id, slideId, body);
+  const parsed = patchSlideSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+  await updateCarouselSlide(ctx.org.id, slideId, parsed.data);
   return NextResponse.json({ ok: true });
 }
 
