@@ -127,21 +127,24 @@ app/
 - [x] Rate limiting active
 - [x] Logging configured
 - [x] Build verified clean
+- [x] CI/CD pipeline (lint + test + build on every PR)
+- [x] Vercel deployment configured (preview on PR, prod on merge)
 
 ### Deployment Steps
-1. Set up PostgreSQL on Render
-2. Configure environment variables
-3. Deploy main branch to Render
-4. Run migrations
-5. Seed database
-6. Configure Stripe webhooks
-7. Test core flows
+1. Create project on Vercel, connect GitHub repo
+2. Set environment variables in Vercel project settings
+3. Deploy `main` branch to Vercel (auto on merge after CI passes)
+4. Run database migrations (`npx prisma db push` or `npx prisma migrate deploy`)
+5. Seed database (`npm run db:seed`)
+6. Configure Stripe webhooks (via Stripe dashboard → point to `/api/stripe/webhook`)
+7. Test core flows on Vercel preview URL
 
 ### Post-Deployment Tasks
-1. Monitor error logs
+1. Monitor error logs (Sentry)
 2. Verify Stripe webhook delivery
 3. Test OAuth flows
 4. Monitor performance metrics
+5. Configure uptime monitoring (Vercel Analytics or external)
 5. Configure uptime monitoring
 6. Set up user analytics
 
@@ -314,6 +317,6 @@ Your BizOpt project is:
 - ✅ Prepared for launch
 - ✅ Scalable for Phase 2
 
-**Next stop: Render deployment!**
+**Next stop: Vercel deployment!**
 
 Good luck with launch! 🚀
