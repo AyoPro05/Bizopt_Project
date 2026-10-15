@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Callout } from "@/components/ui/callout";
 import { Volume2 } from "lucide-react";
 
 type Layer = {
@@ -96,18 +97,13 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
         Stack voiceovers or music on video — synced to your timeline
       </p>
 
-      {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-          >
+       {error && (
+        <Callout tone="danger" title={error} className="mt-4">
+          <Button size="sm" variant="secondary" onClick={() => void load()}>
             Retry
-          </button>
-        </div>
-      )}
+          </Button>
+        </Callout>
+       )}
 
       {loadingLayers ? (
         <p className="mt-4 text-sm text-[var(--color-ink-muted)]">Loading audio layers...</p>
@@ -134,7 +130,7 @@ export function AudioLayerEditor({ mediaAssetId, audioAssets }: Props) {
                 <button
                   type="button"
                   onClick={() => removeLayer(layer.id)}
-                  className="text-xs text-red-600 hover:underline"
+                  className="text-xs text-[var(--color-danger-fg)] hover:underline"
                 >
                   Remove
                 </button>

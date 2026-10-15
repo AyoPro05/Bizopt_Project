@@ -64,7 +64,7 @@ export default async function CampaignDetailPage({
                 <span className="flex items-center gap-2">
                   <Badge status={post.status} />
                   {post.errorMessage && (
-                    <span className="text-xs text-red-600">{post.errorMessage}</span>
+                    <span className="text-xs text-[var(--color-danger-fg)]">{post.errorMessage}</span>
                   )}
                 </span>
               </li>

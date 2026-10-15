@@ -88,3 +88,7 @@ curl -X POST http://localhost:3000/api/debug-sentry
 | `/compliance-center` | Startup compliance checks |
 | `/integrations` | Platform connectors |
 | `/billing` | Trial + subscription |
+
+## SEO and platform experience
+
+The account menu, workspace invitations, Base/Team plans, private support and SEO workbench are described in [platform verification and rollout](docs/PLATFORM_VERIFICATION.md). Apply the additive SQL and configure provider/staff prerequisites before enabling these routes in a deployed environment. See [SEO capability limits](docs/SEO_INTELLIGENCE.md), [billing](docs/PLATFORM_BILLING.md) and [support](docs/PLATFORM_SUPPORT.md) for the implemented workflows and deferred integrations.

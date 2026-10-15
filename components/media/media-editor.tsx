@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Callout } from "@/components/ui/callout";
 import { FallbackImage } from "@/components/ui/fallback-image";
 import { Scissors, Crop } from "lucide-react";
 
@@ -160,24 +161,17 @@ export function MediaEditor({ asset, initialEdits = [] }: Props) {
         )}
 
         {message && (
-          <div
-            className={
-              message.type === "success"
-                ? "rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-                : "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            }
+          <Callout
+            tone={message.type === "success" ? "success" : "danger"}
+            title={message.text}
+            className="mt-4"
           >
-            <p>{message.text}</p>
             {message.type === "error" && (
-              <button
-                type="button"
-                onClick={() => void retryLastEdit()}
-                className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-              >
+              <Button size="sm" variant="secondary" onClick={() => void retryLastEdit()}>
                 Retry
-              </button>
+              </Button>
             )}
-          </div>
+          </Callout>
         )}
 
         {edits.length > 0 && (

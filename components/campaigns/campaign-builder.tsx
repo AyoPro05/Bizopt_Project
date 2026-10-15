@@ -4,6 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Callout } from "@/components/ui/callout";
 import { CarouselBuilder } from "@/components/carousel/carousel-builder";
 import { PlatformSelector } from "./platform-selector";
 
@@ -55,25 +59,27 @@ export function CampaignBuilder({ campaign, assets }: Props) {
       <Card>
         <h2 className="font-medium">Campaign details</h2>
         <div className="mt-4 space-y-4">
-          <label className="block text-sm">
-            Title
-            <input
+          <div>
+            <Label htmlFor="campaign-title">Title</Label>
+            <Input
+              id="campaign-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm"
+              className="mt-1"
             />
-          </label>
-          <label className="block text-sm">
-            Caption
-            <textarea
+          </div>
+          <div>
+            <Label htmlFor="campaign-caption">Caption</Label>
+            <Textarea
+              id="campaign-caption"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={5}
-              className="mt-1 w-full rounded-xl border px-4 py-2.5 text-sm"
+              className="mt-1"
             />
-          </label>
+          </div>
           <div>
-            <span className="text-sm font-medium">Platforms</span>
+            <span className="text-sm font-medium text-[var(--color-ink)]">Platforms</span>
             <div className="mt-2">
               <PlatformSelector value={platforms} onChange={setPlatforms} />
             </div>
@@ -84,21 +90,16 @@ export function CampaignBuilder({ campaign, assets }: Props) {
             </Button>
             <Link
               href={`/assets`}
-              className="inline-flex items-center rounded-xl border px-4 py-2.5 text-sm hover:bg-[var(--color-surface)]"
+              className="inline-flex items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--color-border-strong)_55%,transparent)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-medium text-[var(--color-ink)] shadow-[var(--shadow-card)] transition hover:bg-[var(--color-surface)]"
             >
               Open media library
             </Link>
           </div>
           {message && (
-            <p
-              className={
-                message.type === "success"
-                  ? "text-sm text-emerald-700"
-                  : "text-sm text-red-700"
-              }
-            >
-              {message.text}
-            </p>
+            <Callout
+              tone={message.type === "success" ? "success" : "danger"}
+              title={message.text}
+            />
           )}
         </div>
       </Card>

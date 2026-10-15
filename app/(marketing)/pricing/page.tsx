@@ -1,54 +1,9 @@
 import Link from "next/link";
 import { BILLING } from "@/lib/constants";
+import { getPlanDefinition } from "@/services/billing/plans";
+import { formatMoney } from "@/lib/stripe";
 import { Check } from "lucide-react";
-
-const included = [
-  `${BILLING.trialDisplayPrice} for ${BILLING.trialDays} days — payment method required`,
-  `Then ${BILLING.displayPrice}/month, cancel at period end`,
-  "AI Studio: 6 outputs per idea (caption, carousel, image, video, audio, thread)",
-  "Multi-platform campaigns with LinkedIn first-class",
-  "1 device per subscription",
-  "Draft autosave & resume",
-  "Light / dark theme",
-  "Webhook-synced billing",
-];
-
+const included = ["AI Studio and multi-platform campaign workflows", "Website audits, content briefs and SEO planning", "Draft autosave and recovery", "Help Center and workspace support history"];
 export default function PricingPage() {
-  return (
-    <div className="mx-auto max-w-3xl px-6 py-20">
-      <h1 className="font-display text-center text-4xl font-semibold">Simple pricing</h1>
-      <p className="mt-4 text-center text-[var(--color-ink-muted)]">
-        Try BizOpt for {BILLING.trialDisplayPrice}. One device. Full AI content pack.
-      </p>
-
-      <div className="mt-12 rounded-3xl border-2 border-[var(--color-accent)] bg-[var(--color-card)] p-8 shadow-xl">
-        <p className="text-sm font-medium text-[var(--color-accent)]">BizOpt Pro</p>
-        <p className="mt-2 font-display text-5xl font-semibold">
-          {BILLING.trialDisplayPrice}
-          <span className="text-lg font-normal text-[var(--color-ink-muted)]">
-            {" "}
-            / {BILLING.trialDays} days
-          </span>
-        </p>
-        <p className="mt-2 text-sm text-[var(--color-ink-muted)]">
-          Then {BILLING.displayPrice}/month in {BILLING.currency.toUpperCase()}. Card required at
-          signup.
-        </p>
-        <ul className="mt-8 space-y-3">
-          {included.map((item) => (
-            <li key={item} className="flex items-start gap-3 text-sm">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <Link
-          href="/signup"
-          className="mt-8 block rounded-xl bg-[var(--color-accent)] py-3 text-center font-medium text-white hover:bg-[var(--color-accent-hover)]"
-        >
-          Start trial
-        </Link>
-      </div>
-    </div>
-  );
+  return <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20"><h1 className="font-display text-center text-4xl font-semibold">Choose the space your business needs</h1><p className="mx-auto mt-4 max-w-2xl text-center text-[var(--color-ink-muted)]">One fixed subscription for your workspace. Every capacity includes the owner; there are no per-person surcharges.</p><div className="mt-10 grid gap-6 md:grid-cols-2">{(["base", "team"] as const).map(key => { const plan = getPlanDefinition(key); return <article key={key} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 sm:p-8"><h2 className="text-xl font-semibold">{plan.label}</h2><p className="mt-4 text-4xl font-semibold">{formatMoney(plan.amountCents, plan.currency)}<span className="text-base font-normal text-[var(--color-ink-muted)]"> / month</span></p><p className="mt-3 font-medium">Up to {plan.capacity} people, including the owner</p><p className="mt-2 text-sm text-[var(--color-ink-muted)]">{key === "team" ? "140% of the Base price. One 40% uplift covers all 3 extra seats, whether you use them or not." : "100% of the Base price. Space for you and one teammate."}</p><ul className="mt-6 space-y-3">{included.map(item => <li key={item} className="flex items-start gap-3 text-sm"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-accent)]" />{item}</li>)}</ul><p className="mt-6 text-sm text-[var(--color-ink-muted)]">{formatMoney(process.env.STRIPE_TRIAL_FEE_PRICE_ID ? BILLING.trialPriceCents : 0, plan.currency)} for {BILLING.trialDays} days, then the monthly subtotal above. Card required. Taxes and applicable discounts are separate.</p><Link href={`/billing?plan=${key}`} className="mt-6 flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-accent)] px-4 py-3 font-medium text-white hover:bg-[var(--color-accent-hover)]">Choose {plan.label}</Link></article>; })}</div><p className="mt-6 text-sm text-[var(--color-ink-muted)]">Team upgrades during a paid period require approval of a provider-calculated prorated charge. Base downgrades take effect at renewal after members and reserved invitations fit within 2 seats. Each person can use one active device. Workspace seats and individual device limits are separate.</p></div>;
 }

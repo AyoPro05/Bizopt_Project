@@ -49,7 +49,7 @@ export async function getResumableSessions(orgId: string, userId: string) {
       userId,
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     },
-    include: { brief: { select: { id: true, prompt: true, status: true } } },
+    include: { brief: { select: { id: true, prompt: true, status: true } }, seoContent: { select: { id: true, siteId: true } } },
     orderBy: { lastSavedAt: "desc" },
     take: 10,
   });

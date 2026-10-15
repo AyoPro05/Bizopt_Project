@@ -1,218 +1,61 @@
 "use client";
-
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BILLING } from "@/lib/constants";
-import { formatDate } from "@/lib/dates";
-import { CheckCircle2 } from "lucide-react";
+import { Callout } from "@/components/ui/callout";
+import { Modal } from "@/components/ui/modal";
+import type { PlanDefinition, PlanKey } from "@/services/billing/plans";
+import type { PlanQuote } from "@/services/billing/plan-changes";
 
+type SavedQuote = { id: string; payloadHash: string; quote: PlanQuote; status: string; expiresAt: string };
 type Props = {
-  status: string;
-  userFacingState: string;
-  currentPeriodEnd: Date | null;
-  trialEndAt: Date | null;
-  cancelAtPeriodEnd: boolean;
-  canRefund: boolean;
+  status: string; userFacingState: string; currentPeriodEnd: Date | null; trialEndAt: Date | null; cancelAtPeriodEnd: boolean; canRefund: boolean;
+  plans: PlanDefinition[]; selectedPlan: PlanKey; initialChoice: PlanKey; occupied: number; reserved: number; seatLimit: number; hasSubscription: boolean;
+  pendingPlan: string | null; pendingPlanEffectiveAt: Date | null; requestedPlan: string | null; savedQuote: SavedQuote | null; trialPriceCents: number; trialDays: number; teamConfigured: boolean;
 };
-
-function normalizeStatus(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, "_");
+function dateTime(value: Date | string | number | null) {
+  if (!value) return "Not available";
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" }).format(new Date(typeof value === "number" ? value * 1000 : value));
 }
-
-function humanizeStatus(value: string) {
-  return value
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (m) => m.toUpperCase());
-}
-
-function getDisplayState(status: string, userFacingState: string) {
-  const statusKey = normalizeStatus(status);
-  const stateKey = normalizeStatus(userFacingState);
-
-  if (statusKey === "pending_payment" || stateKey === "pending_payment") {
-    return {
-      label: stateKey === "trialing" ? "Trial Pending" : "Payment Required",
-      tone: "bg-amber-50 text-amber-700 border border-amber-200",
-      helper: "Add a payment method to activate your workspace and begin publishing.",
-    };
-  }
-  if (stateKey === "trialing") {
-    return {
-      label: "Trial Active",
-      tone: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-      helper: "You have full access during your trial period.",
-    };
-  }
-  if (stateKey === "active") {
-    return {
-      label: "Active",
-      tone: "bg-slate-50 text-slate-700 border border-slate-200",
-      helper: "Your subscription is active and in good standing.",
-    };
-  }
-  if (stateKey === "grace_period" || stateKey === "past_due" || stateKey === "payment_failed") {
-    return {
-      label: "Billing Attention Needed",
-      tone: "bg-amber-50 text-amber-700 border border-amber-200",
-      helper: "Update billing details to avoid interruption.",
-    };
-  }
-  if (stateKey === "canceled") {
-    return {
-      label: "Canceled",
-      tone: "bg-slate-100 text-slate-600 border border-slate-200",
-      helper: "Access remains available until the current period ends.",
-    };
-  }
-
-  return {
-    label: humanizeStatus(stateKey || statusKey || "unknown"),
-    tone: "bg-slate-100 text-slate-600 border border-slate-200",
-    helper: "Subscription state synced from secure billing webhooks.",
-  };
-}
-
-export function BillingPanel({
-  status,
-  userFacingState,
-  currentPeriodEnd,
-  trialEndAt,
-  cancelAtPeriodEnd,
-  canRefund,
-}: Props) {
+export function BillingPanel(props: Props) {
+  const router = useRouter();
+  const [choice, setChoice] = useState<PlanKey>(props.initialChoice);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const displayState = getDisplayState(status, userFacingState);
-
-  async function checkout() {
-    setLoading("checkout");
-    setError(null);
-    const res = await fetch("/api/stripe/checkout", { method: "POST" });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else {
-      setError(data.error ?? "Checkout failed");
-      setLoading(null);
-    }
+  const [notice, setNotice] = useState<string | null>(null);
+  const [quote, setQuote] = useState<SavedQuote | null>(props.savedQuote);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const current = props.plans.find(plan => plan.key === props.selectedPlan)!;
+  const money = (cents: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: current.currency.toUpperCase() }).format(cents / 100);
+  async function call(url: string, payload: unknown) {
+    const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const result = await response.json(); if (!response.ok) throw new Error(typeof result.error === "string" ? result.error : "This billing action could not be completed"); return result;
   }
-
-  async function portal() {
-    setLoading("portal");
-    setError(null);
-    const res = await fetch("/api/stripe/portal", { method: "POST" });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else {
-      setError(data.error ?? "Could not open billing portal");
-      setLoading(null);
-    }
+  async function action(name: string, operation: () => Promise<void>) {
+    if (loading) return; setLoading(name); setError(null); setNotice(null);
+    try { await operation(); } catch (error) { setError(error instanceof Error ? error.message : "Unable to contact billing. Your last approved change is safe to retry."); } finally { setLoading(null); }
   }
-
-  async function requestRefund() {
-    if (!confirm("Request a full refund? This may revoke access immediately.")) return;
-    setLoading("refund");
-    setError(null);
-    const res = await fetch("/api/stripe/refund", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason: "customer_request" }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error ?? "Refund failed");
-    setLoading(null);
-    if (res.ok) window.location.reload();
-  }
-
-  const stateKey = normalizeStatus(userFacingState);
-  const isActive = ["active", "grace_period", "trialing"].includes(stateKey);
-  const isTrialing = stateKey === "trialing";
-  const includedFeatures = [
-    "5 social channels",
-    "Advanced AI generation pack",
-    "Real-time compliance audits",
-    "Growth prediction intelligence",
-    "Draft autosave and recovery",
-  ];
-
-  return (
-    <div className="space-y-6">
-      <Card className="p-0">
-        <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm text-[var(--color-ink-muted)]">Plan</p>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${displayState.tone}`}>
-                {displayState.label}
-              </span>
-            </div>
-            <h2 className="mt-2 font-display text-2xl font-semibold">BizOpt Pro</h2>
-            <p className="mt-1 text-[var(--color-ink-muted)]">
-              {BILLING.trialDisplayPrice} for {BILLING.trialDays} days, then {BILLING.displayPrice}/mo ·{" "}
-              {BILLING.currency.toUpperCase()}
-            </p>
-            <p className="mt-2 text-sm text-[var(--color-ink-muted)]">{displayState.helper}</p>
-
-            <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">Status</dt>
-                <dd className="mt-1 font-medium">{displayState.label}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">
-                  {isTrialing ? "Trial ends" : "Period ends"}
-                </dt>
-                <dd className="mt-1 font-medium">
-                  {formatDate(isTrialing ? trialEndAt : currentPeriodEnd)}
-                </dd>
-              </div>
-            </dl>
-
-            {cancelAtPeriodEnd && (
-              <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                Cancellation scheduled — access until {formatDate(currentPeriodEnd)}.
-              </p>
-            )}
-            {error && (
-              <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                {error}
-              </p>
-            )}
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {!isActive && (
-                <Button onClick={checkout} disabled={!!loading}>
-                  {loading === "checkout"
-                    ? "Redirecting..."
-                    : `Start trial — ${BILLING.trialDisplayPrice} for ${BILLING.trialDays} days`}
-                </Button>
-              )}
-              {isActive && (
-                <Button variant="secondary" onClick={portal} disabled={!!loading}>
-                  Manage subscription
-                </Button>
-              )}
-              {canRefund && (
-                <Button variant="ghost" onClick={requestRefund} disabled={!!loading}>
-                  Request refund
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)] p-6 lg:border-l lg:border-t-0">
-            <h3 className="font-medium text-[var(--color-ink)]">Included in this tier</h3>
-            <ul className="mt-4 space-y-3">
-              {includedFeatures.map((feature) => (
-                <li key={feature} className="flex items-start gap-3 text-sm text-[var(--color-ink-muted)]">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
+  const pending = !!props.pendingPlan || !!props.requestedPlan;
+  return <div className="space-y-6">
+    <Card>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div><p className="text-sm text-[var(--color-ink-muted)]">Workspace subscription</p><h2 className="mt-1 text-2xl font-semibold">{current.label}</h2><p className="mt-1 text-[var(--color-ink-muted)]">{money(current.amountCents)} / month · {current.capacity} people including the owner</p></div>
+        <span className="rounded-full border border-[var(--color-border)] px-3 py-1 text-sm">{props.userFacingState.replaceAll("_", " ")}</span>
+      </div>
+      <dl className="mt-6 grid gap-5 sm:grid-cols-3"><div><dt className="text-sm text-[var(--color-ink-muted)]">Occupied seats</dt><dd className="mt-1 font-semibold">{props.occupied} of {props.seatLimit}</dd></div><div><dt className="text-sm text-[var(--color-ink-muted)]">Reserved invitations</dt><dd className="mt-1 font-semibold">{props.reserved}</dd></div><div><dt className="text-sm text-[var(--color-ink-muted)]">{props.status === "trialing" ? "Trial ends" : "Renewal"}</dt><dd className="mt-1 text-sm">{dateTime(props.status === "trialing" ? props.trialEndAt : props.currentPeriodEnd)}</dd></div></dl>
+      <p className="mt-4 text-sm text-[var(--color-ink-muted)]">Recurring subtotal is charged by plan. Taxes and any applicable discounts are separate. Removing teammates does not change your plan or issue a refund.</p>
+      {props.cancelAtPeriodEnd && <Callout tone="warning" title="Cancellation scheduled" className="mt-4">Current access ends {dateTime(props.currentPeriodEnd)}.</Callout>}
+      {props.pendingPlan === "base" && <Callout tone="info" title="Downgrade scheduled" className="mt-4"><p>Team remains active until {dateTime(props.pendingPlanEffectiveAt)}. Then Base allows 2 people including the owner, at {money(props.plans[0].amountCents)} / month before tax or discounts. New invitations must fit within those 2 seats.</p><Button className="mt-3 min-h-11" variant="secondary" disabled={!!loading} onClick={() => action("cancel", async () => { await call("/api/billing/plan", { action: "cancel_downgrade" }); setNotice("The provider confirmed that Team will continue."); setQuote(null); router.refresh(); })}>Cancel scheduled downgrade</Button></Callout>}
+      {props.requestedPlan === "team" && <Callout tone="warning" title="Team upgrade awaiting confirmation" className="mt-4">Base capacity continues until payment succeeds or the provider confirms that no payment is due. Use the same approved change below to check status or finish payment.</Callout>}
+      {props.hasSubscription && <div className="mt-5 flex flex-wrap gap-3"><Button variant="secondary" className="min-h-11" disabled={!!loading} onClick={() => action("portal", async () => { const result = await call("/api/stripe/portal", {}); window.location.assign(result.url); })}>Payment methods and invoices</Button>{props.canRefund && <Button variant="ghost" className="min-h-11" disabled={!!loading} onClick={() => setRefundOpen(true)}>Request refund</Button>}</div>}
+    </Card>
+    {error && <div role="alert"><Callout tone="danger" title="Billing needs attention">{error}</Callout></div>}
+    {notice && <div role="status"><Callout tone="info" title="Billing update">{notice}</Callout></div>}
+    {!props.hasSubscription ? <section aria-labelledby="choose-plan"><h2 id="choose-plan" className="text-xl font-semibold">Choose your plan before checkout</h2><fieldset className="mt-4 grid gap-4 sm:grid-cols-2"><legend className="sr-only">Subscription plan</legend>{props.plans.map(plan => <label key={plan.key} className={`cursor-pointer rounded-xl border-2 p-5 ${choice === plan.key ? "border-[var(--color-accent)]" : "border-[var(--color-border)]"}`}><span className="flex items-center gap-3"><input className="h-5 w-5" type="radio" name="plan" value={plan.key} checked={choice === plan.key} onChange={() => setChoice(plan.key)} disabled={plan.key === "team" && !props.teamConfigured} /><span className="font-semibold">{plan.label}</span></span><span className="mt-4 block text-2xl font-semibold">{money(plan.amountCents)} <span className="text-sm font-normal">/ month</span></span><span className="mt-2 block text-sm">Up to {plan.capacity} people including the owner.</span><span className="mt-2 block text-sm text-[var(--color-ink-muted)]">{plan.key === "team" ? "One 40% uplift covers all 3 additional seats." : "100% of the base recurring price."}</span>{plan.key === "team" && !props.teamConfigured && <span className="mt-2 block text-sm">Team checkout needs provider configuration.</span>}</label>)}</fieldset><p className="mt-4 text-sm text-[var(--color-ink-muted)]">Trial: {money(props.trialPriceCents)} for {props.trialDays} days, then the selected plan&apos;s monthly subtotal. Payment method required. Existing trial terms apply.</p><Button className="mt-4 min-h-11" disabled={!!loading || (choice === "team" && !props.teamConfigured)} loading={loading === "checkout"} onClick={() => action("checkout", async () => { const result = await call("/api/stripe/checkout", { plan: choice }); window.location.assign(result.url); })}>Continue with {choice === "team" ? "Team" : "Base"}</Button></section> : !pending && <Card><h2 className="text-lg font-semibold">{props.selectedPlan === "team" ? "Plan for your next renewal" : "Need room for your team?"}</h2><p className="mt-2 text-sm text-[var(--color-ink-muted)]">{props.selectedPlan === "team" ? "Preview a Base downgrade for renewal. Team stays active through your paid period. First fit your members and reserved invitations within 2 seats." : "Team includes up to 5 people. Preview the provider-calculated amount due now before approving an upgrade; your renewal date stays the same."}</p><Button className="mt-4 min-h-11" variant="secondary" disabled={!!loading || (props.selectedPlan === "base" && !props.teamConfigured)} onClick={() => action("preview", async () => { const result = await call("/api/billing/plan", { action: "preview", targetPlan: props.selectedPlan === "base" ? "team" : "base" }); setQuote(result); })}>Preview {props.selectedPlan === "base" ? "Team upgrade" : "Base at renewal"}</Button></Card>}
+    {quote && <Card><h2 className="text-lg font-semibold">{quote.quote.targetPlan === "team" ? "Review Team upgrade" : "Review Base at renewal"}</h2><p className="mt-2 text-sm">{quote.quote.targetPlan === "team" ? "Capacity becomes 5 only after payment confirmation." : `Team continues until ${dateTime(quote.quote.effectiveAt)}. Base then allows 2 people including the owner. No downgrade refund or credit is created.`}</p><dl className="mt-4 space-y-2 text-sm">{quote.quote.lines.map((line, index) => <div key={index} className="flex justify-between gap-4"><dt>{line.description}</dt><dd className="shrink-0">{money(line.amountCents)}</dd></div>)}<div className="flex justify-between"><dt>Taxes in provider preview</dt><dd>{money(quote.quote.taxCents)}</dd></div><div className="flex justify-between"><dt>Discounts in provider preview</dt><dd>{money(quote.quote.discountCents)}</dd></div><div className="flex justify-between border-t border-[var(--color-border)] pt-3 font-semibold"><dt>Due now</dt><dd>{money(quote.quote.targetPlan === "team" ? quote.quote.amountDueCents : 0)}</dd></div><div className="flex justify-between"><dt>Next recurring subtotal</dt><dd>{money(quote.quote.recurringCents)} / month</dd></div><div className="flex justify-between"><dt>Next renewal</dt><dd>{dateTime(quote.quote.nextRenewal)}</dd></div><div className="flex justify-between"><dt>Next invoice tax</dt><dd>{money(quote.quote.nextInvoiceTaxCents)}</dd></div><div className="flex justify-between"><dt>Next invoice discount</dt><dd>{money(quote.quote.nextInvoiceDiscountCents)}</dd></div><div className="flex justify-between font-semibold"><dt>Provider next invoice total</dt><dd>{money(quote.quote.nextInvoiceTotalCents)}</dd></div></dl><p className="mt-4 text-xs text-[var(--color-ink-muted)]">Approval is bound to this subscription, amount and proration time. Quote expires {dateTime(quote.expiresAt)}. Changed amounts require a new approval.</p><Button className="mt-4 min-h-11" disabled={!!loading} loading={loading === "approve"} onClick={() => action("approve", async () => { const result = await call("/api/billing/plan", { action: "approve", quoteId: quote.id, payloadHash: quote.payloadHash }); if (result.paymentUrl) { window.location.assign(result.paymentUrl); return; } setNotice(result.status === "scheduled" ? "Downgrade scheduled. Team continues through the paid period." : result.status === "expired" ? "The unpaid upgrade expired. Refresh and request a new quote." : "The provider is confirming your approved change. Refresh to check effective access."); setQuote(result.status === "pending_payment" ? quote : null); router.refresh(); })}>{["processing", "pending_payment"].includes(quote.status) ? "Check payment / retry approved change" : quote.quote.targetPlan === "team" ? `Approve ${money(quote.quote.amountDueCents)} now` : "Approve Base at renewal"}</Button></Card>}
+    <p className="text-sm text-[var(--color-ink-muted)]">Each person can use one active device. Workspace seat capacity and individual device limits are enforced separately. <Link className="underline" href="/support">Contact support about device access.</Link></p>
+    <Modal isOpen={refundOpen} onClose={() => setRefundOpen(false)} title="Request a refund?" size="sm"><p className="text-sm">The existing refund policy applies. Approval may revoke access immediately.</p><div className="mt-5 flex justify-end gap-3"><Button variant="secondary" onClick={() => setRefundOpen(false)}>Keep subscription</Button><Button variant="danger" disabled={!!loading} onClick={() => action("refund", async () => { setRefundOpen(false); await call("/api/stripe/refund", { reason: "customer_request" }); setNotice("Refund request processed. Refresh to see provider-confirmed status."); router.refresh(); })}>Confirm refund request</Button></div></Modal>
+  </div>;
 }

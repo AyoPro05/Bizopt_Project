@@ -20,6 +20,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "fingerprint required" }, { status: 400 });
   }
 
-  const status = await getDeviceStatus(org.id, fingerprint);
+  const status = await getDeviceStatus(org.id, fingerprint, session.user.id);
   return NextResponse.json(status);
 }

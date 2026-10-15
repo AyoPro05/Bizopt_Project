@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { processStripeEvent } from "@/services/billing/webhook-handler";
+import { processStoredStripeEvent } from "@/services/billing/webhook-inbox";
+import { Prisma } from "@prisma/client";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -22,10 +23,8 @@ export async function POST(req: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-  } catch (err) {
-    logger.error("webhook_signature_invalid", {
-      error: err instanceof Error ? err.message : "unknown",
-    });
+  } catch {
+    logger.error("webhook_signature_invalid");
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -40,35 +39,11 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-    const isDuplicate =
-      err instanceof Error && err.message.includes("Unique constraint");
-    if (isDuplicate) {
-      return NextResponse.json({ received: true, duplicate: true });
+    if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002")) {
+      return NextResponse.json({ error: "Unable to store provider event" }, { status: 503 });
     }
-    throw err;
   }
-
-  try {
-    await processStripeEvent(event);
-    await db.stripeEvent.update({
-      where: { eventId: event.id },
-      data: {
-        processingStatus: "processed",
-        processedAt: new Date(),
-      },
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Processing failed";
-    logger.error("webhook_processing_failed", { eventId: event.id, error: message });
-    await db.stripeEvent.update({
-      where: { eventId: event.id },
-      data: {
-        processingStatus: "failed",
-        errorMessage: message,
-      },
-    });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-
+  try { await processStoredStripeEvent(event.id); }
+  catch { return NextResponse.json({ error: "Provider event stored; processing will retry." }, { status: 503 }); }
   return NextResponse.json({ received: true });
 }

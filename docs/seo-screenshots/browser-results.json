@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "existing credentials sign-in and authenticated SEO route",
+    "explainable content opportunities generated",
+    "editable draft saved and exact saved version exported",
+    "draft resume and immutable version comparison",
+    "manual local checklist persists",
+    "relevant backlink prospect and outreach draft saved without sending",
+    "CSV property totals import and calculated CTR",
+    "durable audit queuing and cancellation without external crawl",
+    "light primary button text contrast at least 4.5:1",
+    "360px light no page overflow",
+    "768px light no page overflow",
+    "1440px light no page overflow",
+    "dark primary button text contrast at least 4.5:1",
+    "360px dark no page overflow",
+    "768px dark no page overflow",
+    "1440px dark no page overflow",
+    "200% zoom, keyboard focus and reduced-motion smoke checks",
+    "cross-origin mutation and unavailable-tenant denial",
+    "no browser JavaScript exceptions"
+  ],
+  "pageErrors": []
+}

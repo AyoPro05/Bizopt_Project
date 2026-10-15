@@ -13,9 +13,10 @@ import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import { AppTopbar } from "@/components/shell/app-topbar";
 import { DraftResumeCard } from "@/components/drafts/draft-resume-card";
-import { Megaphone, Sparkles, CreditCard, Calendar } from "lucide-react";
+import { Megaphone, Sparkles, CreditCard, Calendar, Search, ArrowUpRight } from "lucide-react";
 import { BILLING, FREE_AI_GENERATIONS_LIMIT } from "@/lib/constants";
 import { formatDate } from "@/lib/dates";
 
@@ -57,29 +58,27 @@ export default async function HomePage() {
       <AppTopbar title="Home" />
 
       {!entitlement?.active && state !== "trialing" && (
-        <Card className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
-          <p className="font-medium text-amber-900 dark:text-amber-100">
-            Start your {BILLING.trialDisplayPrice} · {BILLING.trialDays}-day trial
-          </p>
-          <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
-            Try AI Studio free first ({FREE_AI_GENERATIONS_LIMIT} ideas). Trial is{" "}
-            {BILLING.trialDisplayPrice} for{" "}
-            {BILLING.trialDays} days, then {BILLING.displayPrice}/mo.
-          </p>
-          <Link href="/billing" className="mt-4 inline-block">
-            <Button>Start trial</Button>
-          </Link>
-        </Card>
+        <Callout
+          tone="warning"
+          title={`Start your ${BILLING.trialDisplayPrice} · ${BILLING.trialDays}-day trial`}
+          action={
+            <Link href="/billing">
+              <Button size="sm">Start trial</Button>
+            </Link>
+          }
+          className="mb-6"
+        >
+          Try AI Studio free first ({FREE_AI_GENERATIONS_LIMIT} ideas). Then{" "}
+          {BILLING.trialDisplayPrice} for {BILLING.trialDays} days, then{" "}
+          {BILLING.displayPrice}/mo.
+        </Callout>
       )}
 
       {isTrialing && subscription?.trialEndAt && (
-        <Card className="mb-6 border-[var(--color-accent)] bg-[var(--color-accent-soft)]">
-          <p className="font-medium">Trial active</p>
-          <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-            Renews at {BILLING.displayPrice}/mo on {formatDate(subscription.trialEndAt)} unless
-            canceled.
-          </p>
-        </Card>
+        <Callout tone="info" title="Trial active" className="mb-6">
+          Renews at {BILLING.displayPrice}/mo on {formatDate(subscription.trialEndAt)} unless
+          canceled.
+        </Callout>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -88,6 +87,15 @@ export default async function HomePage() {
           {analytics.summary.publishedPosts} published · {analytics.summary.queuedPosts} queued
         </span>
       </div>
+
+      <Link href="/seo" className="interactive-tile mt-6 flex items-start gap-4 p-5">
+        <Search className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-accent)]" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-lg font-semibold">Turn search visibility into your next action</h2>
+          <p className="mt-1 text-sm text-[var(--color-ink-muted)]">Connect your website, find useful improvements and build a content plan in SEO Intelligence.</p>
+        </div>
+        <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--color-accent)]" aria-hidden="true" />
+      </Link>
 
       {recentBriefs.length > 0 && (
         <section className="mt-8">

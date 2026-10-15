@@ -1,3 +1,4 @@
+import { AppTopbar } from "@/components/shell/app-topbar";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -19,6 +20,7 @@ export default async function CampaignsPage() {
 
   return (
     <div>
+      <AppTopbar />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold">Campaigns</h1>

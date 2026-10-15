@@ -18,6 +18,10 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  webpack(config) {
+    if (process.env.BIZOPT_BUILD_NO_CACHE === "true") config.cache = false;
+    return config;
+  },
   outputFileTracingRoot: path.join(process.cwd()),
   experimental: {
     serverActions: {

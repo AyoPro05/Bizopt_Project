@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export type PlatformEntry = {
   key: string;
@@ -13,9 +14,10 @@ export type PlatformEntry = {
 type Props = {
   value: string[];
   onChange: (keys: string[]) => void;
+  ariaDescribedBy?: string;
 };
 
-export function PlatformSelector({ value, onChange }: Props) {
+export function PlatformSelector({ value, onChange, ariaDescribedBy }: Props) {
   const [platforms, setPlatforms] = useState<PlatformEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,57 +46,53 @@ export function PlatformSelector({ value, onChange }: Props) {
     onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
   }
 
-  if (loading) {
-    return (
-      <p className="text-sm text-[var(--color-ink-muted)]">Loading platform options...</p>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm text-red-700">{error}</p>
-        <button
-          type="button"
-          onClick={() => void loadPlatforms()}
-          className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface)]"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (platforms.length === 0) {
-    return (
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        No publishing platforms are available yet.
-      </p>
-    );
-  }
-
   return (
-    <div className="flex flex-wrap gap-2">
-      {platforms.map((p) => {
-        const selected = value.includes(p.key);
-        return (
-          <button
-            key={p.key}
-            type="button"
-            onClick={() => toggle(p.key)}
-            className={`rounded-full px-3 py-1.5 text-sm transition ${
-              selected
-                ? "bg-[var(--color-accent)] text-white"
-                : "border border-[var(--color-border)] bg-white hover:bg-[var(--color-surface)]"
-            }`}
-          >
-            {p.displayName}
-            {p.capabilities.supportsCarousel && (
-              <span className="ml-1 opacity-70">· carousel</span>
-            )}
-          </button>
-        );
-      })}
+    <div
+      role="group"
+      aria-describedby={ariaDescribedBy}
+      className="flex flex-col gap-2"
+    >
+      {loading && <p className="text-sm text-[var(--color-ink-muted)]">Loading platform options…</p>}
+
+      {error && (
+        <>
+          <p className="text-sm text-[var(--color-danger-fg)]">{error}</p>
+          <Button variant="secondary" size="sm" onClick={() => void loadPlatforms()}>
+            Retry
+          </Button>
+        </>
+      )}
+
+      {!loading && !error && platforms.length === 0 && (
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          No publishing platforms are available yet.
+        </p>
+      )}
+
+      {!loading && !error && platforms.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {platforms.map((p) => {
+            const selected = value.includes(p.key);
+            return (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => toggle(p.key)}
+                className={`rounded-full px-3 py-1.5 text-sm transition ${
+                  selected
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "border border-[var(--color-border)] bg-[var(--color-card)] hover:bg-[var(--color-surface)]"
+                }`}
+              >
+                {p.displayName}
+                {p.capabilities.supportsCarousel && (
+                  <span className="ml-1 opacity-70">· carousel</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

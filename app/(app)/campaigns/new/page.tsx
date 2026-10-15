@@ -3,8 +3,11 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field-error";
 import { PlatformSelector } from "@/components/campaigns/platform-selector";
 
 function NewCampaignForm() {
@@ -93,7 +96,7 @@ function NewCampaignForm() {
     <Card className="mt-8 max-w-2xl">
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
-          <label htmlFor="campaign-title" className="text-sm font-medium">Title</label>
+          <Label htmlFor="campaign-title">Title</Label>
           <Input
             id="campaign-title"
             value={title}
@@ -104,39 +107,39 @@ function NewCampaignForm() {
             className="mt-1"
           />
           {fieldErrors.title && (
-            <p id="campaign-title-error" className="mt-1 text-xs text-red-700">
-              {fieldErrors.title}
-            </p>
+            <FieldError id="campaign-title-error" message={fieldErrors.title} />
           )}
         </div>
         <div>
-          <label htmlFor="campaign-caption" className="text-sm font-medium">Caption</label>
-          <textarea
+          <Label htmlFor="campaign-caption">Caption</Label>
+          <Textarea
             id="campaign-caption"
             value={caption}
             onChange={(e) => updateField("caption", e.target.value)}
             rows={5}
-            className="mt-1 w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+            ariaDescribedBy={fieldErrors.caption ? "campaign-caption-error" : undefined}
+            className="mt-1"
           />
           {fieldErrors.caption && (
-            <p className="mt-1 text-xs text-red-700">{fieldErrors.caption}</p>
+            <FieldError id="campaign-caption-error" message={fieldErrors.caption} />
           )}
         </div>
         <div>
-          <label className="text-sm font-medium">Platforms</label>
+          <Label>Platforms</Label>
           <PlatformSelector
             value={platforms}
             onChange={(next) => {
               setPlatforms(next);
               setFieldErrors((prev) => ({ ...prev, platforms: undefined }));
             }}
+            ariaDescribedBy={fieldErrors.platforms ? "campaign-platforms-error" : undefined}
           />
           {fieldErrors.platforms && (
-            <p className="mt-1 text-xs text-red-700">{fieldErrors.platforms}</p>
+            <FieldError id="campaign-platforms-error" message={fieldErrors.platforms} />
           )}
         </div>
         <div>
-          <label htmlFor="campaign-schedule" className="text-sm font-medium">Schedule (optional)</label>
+          <Label htmlFor="campaign-schedule">Schedule (optional)</Label>
           <Input
             id="campaign-schedule"
             type="datetime-local"
@@ -147,14 +150,12 @@ function NewCampaignForm() {
             className="mt-1"
           />
           {fieldErrors.scheduledAt && (
-            <p id="campaign-schedule-error" className="mt-1 text-xs text-red-700">
-              {fieldErrors.scheduledAt}
-            </p>
+            <FieldError id="campaign-schedule-error" message={fieldErrors.scheduledAt} />
           )}
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <FieldError message={error} />}
         <Button type="submit" disabled={loading || platforms.length === 0}>
-          {loading ? "Creating..." : "Create campaign"}
+          {loading ? "Creating…" : "Create campaign"}
         </Button>
       </form>
     </Card>

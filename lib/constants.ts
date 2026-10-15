@@ -35,7 +35,7 @@ export type UserFacingState = (typeof USER_FACING_STATES)[number];
 export const PLATFORMS = ["instagram", "facebook", "linkedin", "tiktok", "twitter"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
-/** One active device per subscription */
+/** One active device per person, independent of workspace seat capacity. */
 export const DEVICE_LIMIT_DEFAULT = 1;
 
 /** Free AI briefs before trial/subscription */

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { FallbackImage } from "@/components/ui/fallback-image";
 
 export type Slide = {
@@ -60,17 +61,17 @@ export function SlideEditor({ campaignId, slide, assets, onUpdated }: Props) {
           </div>
         )}
         <div className="min-w-0 flex-1 space-y-2">
-          <textarea
+          <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={2}
             placeholder="Slide caption…"
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className="w-full"
           />
           <select
             value={mediaAssetId}
             onChange={(e) => setMediaAssetId(e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-[color-mix(in_srgb,var(--color-border-strong)_55%,transparent)] bg-[var(--color-card)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
           >
             <option value="">Attach image…</option>
             {assets
@@ -86,7 +87,11 @@ export function SlideEditor({ campaignId, slide, assets, onUpdated }: Props) {
       <Button className="mt-3" variant="secondary" disabled={saving} onClick={saveSlide}>
         {saving ? "Saving..." : "Save slide"}
       </Button>
-      {error && <p className="mt-2 text-xs text-red-700">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-[var(--color-danger-fg)]">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

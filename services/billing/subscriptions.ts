@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
 import { BILLING } from "@/lib/constants";
 import type Stripe from "stripe";
+import type { Prisma } from "@prisma/client";
 
 export async function upsertSubscriptionFromStripe(
   orgId: string,
-  sub: Stripe.Subscription
+  sub: Stripe.Subscription,
+  client: Prisma.TransactionClient = db
 ) {
   const item = sub.items.data[0];
   const amountCents = item?.price?.unit_amount ?? BILLING.amountCents;
@@ -23,7 +25,7 @@ export async function upsertSubscriptionFromStripe(
         : sub.default_payment_method.id;
   }
 
-  return db.subscription.upsert({
+  return client.subscription.upsert({
     where: { orgId },
     create: {
       orgId,

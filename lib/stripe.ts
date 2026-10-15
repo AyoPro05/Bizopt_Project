@@ -23,6 +23,13 @@ export const stripe = new Proxy({} as Stripe, {
   },
 });
 
+export function getPlanPriceId(plan: "base" | "team"): string {
+  if (plan === "base") return getMonthlyPriceId();
+  const priceId = process.env.STRIPE_TEAM_PRICE_ID;
+  if (!priceId) throw new Error("Team checkout is unavailable: STRIPE_TEAM_PRICE_ID is not configured");
+  return priceId;
+}
+
 export function getMonthlyPriceId(): string {
   const priceId = process.env.STRIPE_PRICE_ID;
   if (!priceId) {
@@ -52,6 +59,8 @@ export const STRIPE_WEBHOOK_EVENTS = [
   "checkout.session.completed",
   "customer.subscription.created",
   "customer.subscription.updated",
+  "customer.subscription.pending_update_applied",
+  "customer.subscription.pending_update_expired",
   "customer.subscription.deleted",
   "customer.subscription.trial_will_end",
   "invoice.payment_succeeded",

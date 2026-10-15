@@ -11,8 +11,9 @@ export async function getUserOrgMembership(userId: string, orgId: string) {
 }
 
 export async function getUserPrimaryOrg(userId: string) {
+  const preference = await db.user.findUnique({ where: { id: userId }, select: { activeOrgId: true } });
   const membership = await db.orgMember.findFirst({
-    where: { userId },
+    where: { userId, ...(preference?.activeOrgId ? { orgId: preference.activeOrgId } : {}) },
     include: {
       org: {
         include: {
@@ -23,6 +24,9 @@ export async function getUserPrimaryOrg(userId: string) {
     },
     orderBy: { createdAt: "asc" },
   });
+  if (!membership && preference?.activeOrgId) {
+    return (await db.orgMember.findFirst({ where: { userId }, include: { org: { include: { entitlement: true, subscription: true } } }, orderBy: { createdAt: "asc" } }))?.org ?? null;
+  }
   return membership?.org ?? null;
 }
 
@@ -39,11 +43,11 @@ export async function requireActiveEntitlement(orgId: string): Promise<boolean> 
   if (!entitlement) return false;
 
   const allowedStates = ["active", "trialing", "grace_period"];
-  if (!entitlement.active && !allowedStates.includes(entitlement.userFacingState)) {
+  if (!entitlement.active || !allowedStates.includes(entitlement.userFacingState)) {
     return false;
   }
   if (entitlement.accessUntil && entitlement.accessUntil < new Date()) {
-    if (entitlement.userFacingState !== "grace_period") return false;
+    return false;
   }
   return allowedStates.includes(entitlement.userFacingState);
 }
@@ -75,11 +79,12 @@ export async function verifyOrgOwnsStripeCustomer(
 
 export async function requireDeviceBound(
   orgId: string,
-  rawFingerprint: string
+  rawFingerprint: string,
+  userId?: string
 ): Promise<boolean> {
   const fingerprint = normalizeFingerprint(rawFingerprint);
   const device = await db.device.findFirst({
-    where: { orgId, fingerprint, revokedAt: null },
+    where: { orgId, fingerprint, revokedAt: null, ...(process.env.TEAM_DEVICE_POLICY !== "workspace_legacy" ? { userId: userId ?? "__missing_identity__" } : {}) },
   });
   return !!device;
 }

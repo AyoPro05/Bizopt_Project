@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 
 export function RunPredictButton() {
   const router = useRouter();
@@ -30,16 +31,11 @@ export function RunPredictButton() {
         {loading ? "Predicting…" : "Run growth prediction"}
       </Button>
       {error && (
-        <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={run}
-            className="mt-2 rounded-lg border border-red-300 bg-white px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
-          >
+        <Callout tone="danger" title={error} className="mt-2">
+          <Button size="sm" variant="secondary" onClick={run}>
             Retry
-          </button>
-        </div>
+          </Button>
+        </Callout>
       )}
     </div>
   );

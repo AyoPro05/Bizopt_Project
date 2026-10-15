@@ -49,6 +49,7 @@ export const publishScheduleSchema = z.object({
 });
 
 export const checkoutSchema = z.object({
+  plan: z.enum(["base", "team"]),
   successUrl: z
     .string()
     .url()

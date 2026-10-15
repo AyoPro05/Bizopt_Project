@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/empty-state";
 import { Plus, GripVertical } from "lucide-react";
 import { SlideEditor, type Slide } from "./slide-editor";
@@ -114,16 +115,11 @@ export function CarouselBuilder({ campaignId, assets, supportsCarousel }: Props)
       </div>
 
       {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-          >
+        <Callout tone="danger" title={error} className="mt-4">
+          <Button size="sm" variant="secondary" onClick={() => void load()}>
             Retry
-          </button>
-        </div>
+          </Button>
+        </Callout>
       )}
 
       <div className="mt-6 space-y-4">
@@ -173,7 +169,7 @@ export function CarouselBuilder({ campaignId, assets, supportsCarousel }: Props)
                 <button
                   type="button"
                   onClick={() => removeSlide(slide.id)}
-                  className="mt-2 text-xs text-red-600 hover:underline"
+                  className="mt-2 text-xs text-[var(--color-danger-fg)] hover:underline"
                 >
                   Remove slide
                 </button>
