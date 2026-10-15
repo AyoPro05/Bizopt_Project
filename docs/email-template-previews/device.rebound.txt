@@ -1,0 +1,9 @@
+Your active BizOpt device changed
+
+A device rebind completed. Review your devices. If this wasn’t you, reset your password and contact support.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/devices
+
+Contact support: https://app.example.test/help

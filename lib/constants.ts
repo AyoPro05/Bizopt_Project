@@ -2,17 +2,18 @@ export const APP_NAME = "BizOpt";
 export const APP_TAGLINE = "AI content creation and social publishing";
 
 export const BILLING = {
-  currency: process.env.BILLING_CURRENCY ?? "usd",
-  amountCents: Number(process.env.SUBSCRIPTION_AMOUNT_CENTS ?? 999),
-  trialPriceCents: Number(process.env.TRIAL_PRICE_CENTS ?? 99),
-  trialDays: Number(process.env.TRIAL_DAYS ?? 7),
+  currency: "usd",
+  amountCents: 999,
+  trialPriceCents: 99,
+  trialDays: 7,
   displayPrice: "$9.99",
   trialDisplayPrice: "$0.99",
   interval: "month" as const,
   planId: "bizopt_pro_monthly",
-  refundWindowDays: 7,
-  gracePeriodDays: 3,
+  gracePeriodDays: Number(process.env.BILLING_GRACE_PERIOD_DAYS ?? 3),
 } as const;
+
+export const COMMERCIAL_TERMS = { offerVersion: "2026-10-15", termsVersion: "2026-10-15", renewalDisclosureVersion: "2026-10-15" } as const;
 
 export const USER_FACING_STATES = [
   "pending_payment",

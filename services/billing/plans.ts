@@ -18,7 +18,7 @@ export function assertPlanPrice(price: ProviderPrice, plan: PlanDefinition): voi
   }
 }
 
-export function planForProviderPrice(price: ProviderPrice, quantity: number | null | undefined, ids = { base: process.env.STRIPE_PRICE_ID, team: process.env.STRIPE_TEAM_PRICE_ID }): PlanDefinition {
+export function planForProviderPrice(price: ProviderPrice, quantity: number | null | undefined, ids = { base: process.env.STRIPE_MONTHLY_PRICE_ID || process.env.STRIPE_PRICE_ID, team: process.env.STRIPE_TEAM_PRICE_ID }): PlanDefinition {
   if (quantity !== 1) throw new Error("Plan quantity must be 1; per-seat billing is not approved");
   const key = price.id === ids.base ? "base" : price.id === ids.team ? "team" : null;
   if (!key) throw new Error("Provider price is not an approved Base or Team price");

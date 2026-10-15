@@ -1,0 +1,11 @@
+Your generation could not complete
+
+A generation failed after its final retry. Open AI Studio to review the result and available next steps.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/ai-studio
+
+Contact support: https://app.example.test/help
+
+Change optional email preferences: https://app.example.test/notifications/unsubscribe

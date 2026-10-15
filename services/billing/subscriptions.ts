@@ -45,10 +45,7 @@ export async function upsertSubscriptionFromStripe(
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
       currentPeriodStart: new Date(sub.current_period_start * 1000),
       currentPeriodEnd: new Date(sub.current_period_end * 1000),
-      trialConvertedAt:
-        sub.status === "active" && trialEndAt && trialEndAt < new Date()
-          ? new Date()
-          : null,
+      lastReconciledAt: new Date(),
     },
     update: {
       stripeCustomerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
@@ -63,10 +60,7 @@ export async function upsertSubscriptionFromStripe(
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
       currentPeriodStart: new Date(sub.current_period_start * 1000),
       currentPeriodEnd: new Date(sub.current_period_end * 1000),
-      trialConvertedAt:
-        sub.status === "active" && trialEndAt && trialEndAt < new Date()
-          ? new Date()
-          : undefined,
+      lastReconciledAt: new Date(),
     },
   });
 }

@@ -96,7 +96,7 @@ export default withAuth(
     pages: { signIn: "/login" },
     callbacks: {
       authorized: ({ req, token }) => {
-        if (req.nextUrl.pathname.startsWith("/api/")) return true;
+        if (req.nextUrl.pathname.startsWith("/api/") || req.nextUrl.pathname === "/notifications/unsubscribe") return true;
         return !!token;
       },
     },
@@ -124,5 +124,7 @@ export const config = {
     "/help/:path*",
     "/support/:path*",
     "/support-console/:path*",
+    "/notifications/:path*",
+    "/notification-delivery/:path*",
   ],
 };

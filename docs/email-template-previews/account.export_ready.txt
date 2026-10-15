@@ -1,0 +1,9 @@
+Your BizOpt data export is ready
+
+Your data export is ready. Sign in to your account to download it before its recorded expiry.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/settings
+
+Contact support: https://app.example.test/help

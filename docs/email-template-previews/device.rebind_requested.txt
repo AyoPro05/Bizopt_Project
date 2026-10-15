@@ -1,0 +1,9 @@
+A BizOpt device rebind was requested
+
+A device rebind was requested for your account. Review your devices and contact support if you did not request it.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/devices
+
+Contact support: https://app.example.test/help

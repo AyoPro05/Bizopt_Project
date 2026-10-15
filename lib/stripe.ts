@@ -31,16 +31,18 @@ export function getPlanPriceId(plan: "base" | "team"): string {
 }
 
 export function getMonthlyPriceId(): string {
-  const priceId = process.env.STRIPE_PRICE_ID;
+  const priceId = process.env.STRIPE_MONTHLY_PRICE_ID || process.env.STRIPE_PRICE_ID;
   if (!priceId) {
-    throw new Error("STRIPE_PRICE_ID is not configured");
+    throw new Error("STRIPE_MONTHLY_PRICE_ID is not configured (legacy STRIPE_PRICE_ID is also supported)");
   }
   return priceId;
 }
 
-/** Optional one-time $0.99 trial fee price in Stripe */
-export function getTrialFeePriceId(): string | null {
-  return process.env.STRIPE_TRIAL_FEE_PRICE_ID ?? null;
+/** Mandatory one-time paid introductory fee; never fall back to a free offer. */
+export function getTrialFeePriceId(): string {
+  const id = process.env.STRIPE_INTRODUCTORY_PRICE_ID || process.env.STRIPE_TRIAL_FEE_PRICE_ID;
+  if (!id) throw new Error("STRIPE_INTRODUCTORY_PRICE_ID is required for the paid introductory offer");
+  return id;
 }
 
 /** @deprecated use getMonthlyPriceId */
@@ -48,7 +50,7 @@ export function getPriceId(): string {
   return getMonthlyPriceId();
 }
 
-export function formatMoney(amountCents: number, currency = BILLING.currency): string {
+export function formatMoney(amountCents: number, currency: string = BILLING.currency): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
@@ -57,15 +59,24 @@ export function formatMoney(amountCents: number, currency = BILLING.currency): s
 
 export const STRIPE_WEBHOOK_EVENTS = [
   "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.pending_update_applied",
   "customer.subscription.pending_update_expired",
   "customer.subscription.deleted",
   "customer.subscription.trial_will_end",
+  "invoice.paid",
   "invoice.payment_succeeded",
   "invoice.payment_failed",
   "invoice.payment_action_required",
   "payment_intent.succeeded",
   "charge.refunded",
+  "refund.created",
+  "refund.updated",
+  "refund.failed",
+  "charge.dispute.created",
+  "charge.dispute.updated",
+  "charge.dispute.closed",
 ] as const;

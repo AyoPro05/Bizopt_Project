@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { NotificationBell } from "@/components/notifications/notification-center";
 import { AccountMenu } from "@/components/account/account-menu";
 import { Home, Menu } from "lucide-react";
 import { DraftAutosaveIndicator } from "@/components/drafts/draft-autosave-indicator";
@@ -37,6 +38,7 @@ export function AppTopbar({ title }: { title?: string }) {
       <div className="flex min-w-0 items-center gap-2">
         <DraftAutosaveIndicator />
         <span className="flex min-h-11 min-w-11 items-center justify-center"><ThemeModeButton /></span>
+        <NotificationBell />
         <AccountMenu />
       </div>
     </header>

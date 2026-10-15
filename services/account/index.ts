@@ -1,3 +1,4 @@
+import { emitEvent } from "@/services/automation/events";
 import { db } from "@/lib/db";
 import { CAPABILITY_ROLES, hasCapability } from "@/lib/platform-permissions";
 import { getWorkspace } from "@/services/workspace";
@@ -56,12 +57,23 @@ export async function signOutAll(userId: string, password: string) {
 
 export async function privacyRequest(orgId: string, userId: string, kind: "export" | "deletion", password: string) {
   await requirePassword(userId, password);
+  const user = await db.user.findUnique({ where: { id: userId }, select: { emailVerified: true } });
+  if (!user?.emailVerified) throw new AppError("Verify your email before requesting account data or deletion.", 403);
   const subject = kind === "export" ? "Account data export request" : "Account deletion review request";
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     const existing = await tx.supportTicket.findFirst({ where: { orgId, userId, category: "privacy", subject, status: { notIn: ["resolved", "closed"] } }, select: { id: true } });
-    if (existing) return { ticketId: existing.id, status: "received", message: "Your existing privacy request is available in Support." };
-    const ticket = await tx.supportTicket.create({ data: { orgId, userId, category: "privacy", subject, description: kind === "deletion" ? "Please review my account deletion request. No account data has been erased. Review ownership transfer, workspace-owned work, billing and applicable retention before execution. Backup erasure follows the verified retention process." : "Please review a secure export of my account data. No workspace export has been attached or sent. Confirm identity, authorisation and permitted data scope before preparation.", severity: "normal", workflow: "settings", diagnosticsConsent: false } });
-    await tx.auditLog.create({ data: { orgId, userId, action: `account.${kind}_requested`, entity: "SupportTicket", entityId: ticket.id } });
-    return { ticketId: ticket.id, status: "received", message: "Request recorded in Support for review. No data has been exported or deleted." };
-  });
+    const ticket = existing ?? await tx.supportTicket.create({ data: { orgId, userId, category: "privacy", subject, description: kind === "deletion" ? "Please review my account deletion request. No account data has been erased. Review ownership transfer, workspace-owned work, billing and applicable retention before execution. Backup erasure follows the verified retention process." : "Please review my account data request. A limited account export excludes workspace-owned content, credentials and internal support notes. Review additional permitted data scope through support.", severity: "normal", workflow: "settings", diagnosticsConsent: false } });
+    let aggregateId = ticket.id;
+    let shouldNotify = !existing;
+    if (kind === "export") {
+      const active = await tx.dataExportJob.findFirst({ where: { orgId, userId, sourceTicketId: ticket.id, OR: [{ status: { in: ["pending", "processing"] } }, { status: "ready", expiresAt: { gt: new Date() } }] } });
+      if (!active) { const job = await tx.dataExportJob.create({ data: { orgId, userId, sourceTicketId: ticket.id } }); aggregateId = job.id; shouldNotify = true; }
+      else shouldNotify = false;
+    }
+    if (shouldNotify) {
+      await tx.auditLog.create({ data: { orgId, userId, action: `account.${kind}_requested`, entity: "SupportTicket", entityId: ticket.id } });
+      await emitEvent(tx, { userId, orgId, eventType: kind === "export" ? "account.export_requested" : "account.deletion_requested", aggregateType: "privacy_request", aggregateId, dedupeKey: `privacy-${kind}:${aggregateId}`, payload: {} });
+    }
+    return { ticketId: ticket.id, status: "received", message: kind === "export" ? "Account export request recorded. Check Settings for preparation and expiry; additional privacy scope remains available in Support." : "Deletion request recorded in Support for review. No data has been erased." };
+  }, { isolationLevel: "Serializable" });
 }

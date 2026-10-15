@@ -5,6 +5,7 @@ import { stripe, getPlanPriceId } from "@/lib/stripe";
 import { requireCapability } from "@/lib/platform-permissions";
 import { AppError } from "@/services/platform/errors";
 import { logger } from "@/lib/logger";
+import { hasPaidAccess } from "./lifecycle";
 import { getPlanDefinition, assertPlanPrice, planForProviderPrice, assertChangeSupported, invoiceSummary, quoteHash, type PlanKey } from "./plans";
 
 export class BillingCapacityConflict extends AppError {
@@ -170,13 +171,14 @@ export async function reconcilePlanSubscription(orgId: string, sub: Stripe.Subsc
   if (sub.items.data.length !== 1) throw conflict("Unexpected provider items; billing reconciliation requires review");
   const plan = planForProviderPrice(sub.items.data[0].price, sub.items.data[0].quantity);
   const invoice = typeof sub.latest_invoice === "object" ? sub.latest_invoice : null;
-  const confirmed = sub.status === "trialing" || (sub.status === "active" && !sub.pending_update && !!invoice?.paid);
+  const confirmed = sub.status === "trialing" || (sub.status === "active" && !sub.pending_update && !!invoice?.paid && invoice.amount_paid > 0);
   if (!confirmed) return;
   try {
     const apply = async (tx: Tx) => {
       const local = await tx.subscription.findUnique({ where: { orgId } });
       if (!local) throw conflict("Workspace billing record not found");
       assertOwnsProvider(local, sub);
+      if (!hasPaidAccess({ ...local, status: sub.status })) return;
       const seats = await occupiedAndReserved(tx, orgId);
       if (seats.total > plan.capacity) throw new BillingCapacityConflict(plan.key);
       const planChanged = local.selectedPlan !== plan.key;

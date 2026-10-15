@@ -116,6 +116,7 @@ export default function LoginPage() {
             </p>
           )}
         </div>
+        <p className="text-sm"><Link href={`/forgot-password${callbackQuery}`} className="text-[var(--color-accent)] hover:underline">Forgot password?</Link></p>
         {error && <p className="text-sm text-[var(--color-danger-fg)]">{error}</p>}
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Signing in..." : "Sign in"}

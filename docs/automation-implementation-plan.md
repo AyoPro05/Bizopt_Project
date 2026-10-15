@@ -1,0 +1,22 @@
+# Lifecycle automation implementation plan
+
+**Goal:** Extend existing BizOpt with durable, private account/billing/security/operational notifications, preserving existing authentication and paid plan architecture.
+
+**Architecture:** Related business writes and a unique semantic OutboxEvent commit together. A leased PostgreSQL dispatcher evaluates category preferences and creates separate EMAIL/IN_APP Notification rows. A delivery worker freezes encrypted provider payloads, uses one stable idempotency key, records attempts and reconciles signed provider callbacks. Security token lookup uses hashes; short-lived delivery secrets are encrypted and purged. No exactly-once claim.
+
+**Alternatives considered:** Direct inline email loses intent across crashes and couples domain success to provider outages. A new Redis/BullMQ service adds operational dependencies without an existing broker. Reuse PostgreSQL leases and the installed Resend SDK; a future broker can consume the same outbox.
+
+## Shared contracts
+
+Root owns Prisma schema and additive SQL. Domain services call `emitEvent(tx, { eventType, dedupeKey, userId, orgId?, aggregateType, aggregateId, payload, secret?, secretExpiresAt? })` from services/automation/events.ts. Payload is minimal safe JSON; secret is short-lived encrypted JSON, never shown in in-app payloads or admin metadata. Event names and template/category mappings are listed in notification-event-matrix.md. Notification rows are separate per channel; delivery/read state never share a status. Staff delivery views reuse support MFA.
+
+- [ ] Stage 1: Finish audit/event matrix; preserve user-approved per-person device policy. Create only additive models and SQL, with server-only RLS, constraints/indexes and tested safe migration order.
+- [ ] Stage 2: Implement event append, DB dispatcher, policy, provider/fake adapter, versioned HTML/text templates, encrypted frozen payloads, leases, retries, dead letters, delivery reconciliation, suppression and sensitive-envelope expiry. Tests first for dedupe, outage/crash recovery, ambiguous sends and signatures.
+- [ ] Stage 3: Replace registration/GET verification with transactional hashed token issuance and explicit POST confirmation; welcome once, no paid access. Add resend cooldown, privacy-preserving request responses, reset/change/email-change flows and atomic revocation. Add confirmation/recovery pages with no third-party monitoring.
+- [ ] Stage 4: Require verified checkout plus explicit immutable commercial consent; validate mandatory introductory price and real provider dates. Classify intro/first-recurring/renewal/other using invoice relations and local checkout intent; extend existing current-provider reconciliation. Add normalized notices/reminders/cancel/resume/refund/dispute events. Preserve Base/Team plan controls and payment-pending access boundaries.
+- [ ] Stage 5: Add private notification center/preferences, billing history and privileged metadata-only delivery dashboard with aggregate operational metrics. Security/billing remain necessary; optional operational/digest preferences and unsubscribe tokens respect suppression.
+- [ ] Stage 6: Emit operational events in existing device/publishing/connection/job domain transitions. Only real evidence creates notices; unavailable engines remain documented. Add reconciliation for actual missed/exhausted operations.
+- [ ] Stage 7: Validate SQL on disposable PostgreSQL, test full account/outbox/billing/delivery tenancy flows with fake mail and provider fixtures, build/lint/typecheck, run browser journeys and render fake template previews. Record exact results and unresolved live checks.
+- [ ] Stage 8: Add deliverability/billing runbooks, env inventory, independently deployed Render worker example, startup validation, aggregate alert conditions and staging checks. No real mail, live charges, destructive migration or production release.
+
+For each vertical slice: write and observe focused failing tests; implement minimum production behavior; rerun tests/type/lint; review specification then security/code quality. Root integrates disjoint specialist file scopes and executes real DB/browser verification. Commercial changes outside explicit supplied terms, destructive database actions and live customer sends are excluded and require explicit approval. Final report maps changed files, schema, event matrix, template previews, results, setup and blockers.

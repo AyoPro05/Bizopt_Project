@@ -45,12 +45,14 @@ export function AccountMenu() {
   const identity = account?.user.name || account?.user.email || "Your account";
   const links = [
     { href: "/settings", label: "Account settings", icon: Settings },
+    { href: "/notifications", label: "Notifications", icon: LifeBuoy },
+    { href: "/settings/notifications", label: "Notification preferences", icon: Settings },
     { href: "/workspace", label: "Manage workspace", icon: Users },
     ...(account?.workspace.canInvite ? [{ href: "/workspace#invite", label: "Invite teammates", icon: UserPlus }] : []),
     { href: "/help", label: "Help Center", icon: CircleHelp },
     { href: "/support", label: "Contact support", icon: LifeBuoy },
     { href: `/support?report=1&workflow=${encodeURIComponent(pathname)}`, label: "Report an issue", icon: MessageSquareWarning },
-    ...(account?.supportStaff ? [{ href: "/support-console", label: "Support console", icon: ShieldCheck }] : []),
+    ...(account?.supportStaff ? [{ href: "/support-console", label: "Support console", icon: ShieldCheck }, { href: "/notification-delivery", label: "Notification delivery", icon: ShieldCheck }] : []),
   ];
   const body = <div ref={contents} onKeyDown={(event) => {
     if (event.key === "Escape") { event.preventDefault(); close(); }

@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { shouldDropIdentityTelemetry } from "@/lib/identity-privacy";
 import { scrubMonitoringEvent } from "@/lib/monitoring-privacy";
 
 Sentry.init({
@@ -6,6 +7,6 @@ Sentry.init({
   environment: process.env.SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
   tracesSampleRate: 0.1,
   sendDefaultPii: false,
-  beforeSend: scrubMonitoringEvent,
-  beforeSendTransaction: scrubMonitoringEvent,
+  beforeSend: (event) => shouldDropIdentityTelemetry(event) ? null : scrubMonitoringEvent(event),
+  beforeSendTransaction: (event) => shouldDropIdentityTelemetry(event) ? null : scrubMonitoringEvent(event),
 });

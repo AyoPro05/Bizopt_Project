@@ -1,0 +1,17 @@
+Welcome to BizOpt — let’s create your first campaign
+
+Your email is verified. Visit Home to see your current access and start creating.
+
+Email verification does not activate a paid subscription. Your current plan and recorded usage limits are shown in Billing; any limited free preview remains separate from paid access.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/home
+
+Create from Idea: https://app.example.test/ai-studio
+
+Connect social accounts: https://app.example.test/integrations
+
+Business profile: https://app.example.test/settings
+
+Contact support: https://app.example.test/help

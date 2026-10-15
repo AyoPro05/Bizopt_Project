@@ -7,7 +7,7 @@ const origin = "https://app.example.test";
 describe("account integration boundaries", () => {
   it("preserves selected plans and rejects cross-origin or authentication loop destinations", () => {
     expect(safeInternalDestination("/billing?plan=team", origin)).toBe("/billing?plan=team");
-    for (const path of ["https://evil.test/billing", "//evil.test", "/\\evil.test", "/api/account", "/login"]) expect(safeInternalDestination(path, origin)).toBe("/ai-studio");
+    for (const path of ["https://evil.test/billing", "//evil.test", "/\\evil.test", "/api/account", "/login", "/billing?plan=team&token=private", "/home?password=private"]) expect(safeInternalDestination(path, origin)).toBe("/ai-studio");
   });
   it("requires the expected origin for cookie mutations even with an arbitrary bearer", () => {
     const req = (extra: HeadersInit) => new Request(`${origin}/api/devices/rebind`, { method: "POST", headers: { cookie: "__Secure-next-auth.session-token=value", authorization: "Bearer arbitrary", ...extra } });

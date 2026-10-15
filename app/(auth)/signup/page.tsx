@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { signIn } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BILLING } from "@/lib/constants";
@@ -36,6 +35,7 @@ export default function SignupPage() {
     }
     if (!form.password) next.password = "Password is required.";
     else if (form.password.length < 8) next.password = "Password must be at least 8 characters.";
+    else if (new TextEncoder().encode(form.password).length > 72) next.password = "Password must use no more than 72 UTF-8 bytes.";
     return next;
   }
 
@@ -51,7 +51,7 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({...form,callbackUrl:safeInternalDestination(new URLSearchParams(window.location.search).get("callbackUrl"),window.location.origin)}),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -69,9 +69,8 @@ export default function SignupPage() {
         setError(data.error?.email?.[0] ?? data.error ?? "Signup failed");
         return;
       }
-      await signIn("credentials", { email: form.email, password: form.password, redirect: false });
       const next = safeInternalDestination(new URLSearchParams(window.location.search).get("callbackUrl"), window.location.origin);
-      router.push(`/device-check?next=${encodeURIComponent(next)}`);
+      router.push(`/check-email?callbackUrl=${encodeURIComponent(next)}`);
     } catch {
       setError("Unable to create account right now. Please try again.");
     } finally {
@@ -88,7 +87,7 @@ export default function SignupPage() {
     <div className="card-panel p-8 shadow-[var(--shadow-elevated)]">
       <h1 className="font-display text-2xl font-semibold">Create your workspace</h1>
       <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-        {BILLING.trialDisplayPrice} for {BILLING.trialDays} days, then {BILLING.displayPrice}/mo
+        {BILLING.trialDisplayPrice} today for {BILLING.trialDays} days, then {BILLING.displayPrice}/month until canceled.
       </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-4" autoComplete="on">
         <div>
@@ -168,18 +167,19 @@ export default function SignupPage() {
             onChange={(e) => updateField("password", e.target.value)}
             required
             minLength={8}
+            maxLength={72}
             error={!!fieldErrors.password}
             ariaDescribedBy={fieldErrors.password ? "signup-password-error" : undefined}
             className="mt-1"
           />
-          <p className="mt-1 text-xs text-[var(--color-ink-muted)]">At least 8 characters</p>
+          <p className="mt-1 text-xs text-[var(--color-ink-muted)]">At least 8 characters; no more than 72 UTF-8 bytes.</p>
           {fieldErrors.password && (
             <p id="signup-password-error" className="mt-1 text-xs text-[var(--color-danger-fg)]">
               {fieldErrors.password}
             </p>
           )}
         </div>
-        {error && <p className="text-sm text-[var(--color-danger-fg)]">{error}</p>}
+        {error && <p role="alert" className="text-sm text-[var(--color-danger-fg)]">{error}</p>}
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Creating account..." : "Create account"}
         </Button>

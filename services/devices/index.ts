@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { emitEvent } from "@/services/automation/events";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizeFingerprint } from "@/lib/device";
@@ -41,9 +43,12 @@ export async function rebindDevice(orgId: string, oldFingerprint: string, newFin
     if (!old) return { ok: false as const, error: "device_not_found", code: 404 };
     const fingerprint = normalizeFingerprint(newFingerprint);
     const existing = await tx.device.findFirst({ where: { ...scope, fingerprint } });
+    const operationId = randomUUID();
+    await emitEvent(tx, { userId, orgId, aggregateType: "device", aggregateId: old.id, eventType: "device.rebind_requested", dedupeKey: `device-rebind-requested:${operationId}`, payload: { occurredAt: new Date().toISOString() } });
     await tx.device.update({ where: { id: old.id }, data: { revokedAt: new Date() } });
     const data = { orgId, userId: perPerson() ? userId : null, fingerprint, ...meta, revokedAt: null, isPrimary: true, lastSeenAt: new Date() };
     const device = existing ? await tx.device.update({ where: { id: existing.id }, data }) : await tx.device.create({ data });
+    await emitEvent(tx, { userId, orgId, aggregateType: "device", aggregateId: device.id, eventType: "device.rebound", dedupeKey: `device-rebound:${operationId}`, payload: { occurredAt: new Date().toISOString() } });
     return { ok: true as const, device, rebind: true };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
