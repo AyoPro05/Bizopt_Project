@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
+import { disposableTestDatabase } from "@/scripts/test-database-config.mjs";
 import { hash } from "bcryptjs";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
@@ -12,8 +13,8 @@ import { updatePreferences } from "@/services/account";
 import { createTicket, getUserTicket, staffUpdateTicket } from "@/services/support/tickets";
 import { encryptTotpSecret, totp } from "@/services/support/mfa";
 import { requireSupportStaff, unlockSupport } from "@/services/support/access";
-const url = process.env.PLATFORM_TEST_DATABASE_URL;
-const enabled = url === "postgresql://seo_test@127.0.0.1:55439/bizopt_seo_test";
+const url = disposableTestDatabase(process.env.PLATFORM_TEST_DATABASE_URL);
+const enabled = !!url;
 const suffix = randomUUID();
 const users: string[] = [];
 let orgId = "", otherOrgId = "", owner = "", teammate = "", stranger = "";

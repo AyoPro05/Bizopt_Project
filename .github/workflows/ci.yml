@@ -7,7 +7,10 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: 20
+  NODE_VERSION: 22
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -23,7 +26,40 @@ jobs:
       - run: npm run lint
 
   test:
-    name: Test
+    name: Database and security tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: seo_test
+          POSTGRES_DB: bizopt_ci_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 127.0.0.1:55439:5432
+        options: >-
+          --health-cmd "pg_isready -U seo_test -d bizopt_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://seo_test@127.0.0.1:55439/bizopt_ci_test
+      SEO_TEST_DATABASE_URL: postgresql://seo_test@127.0.0.1:55439/bizopt_ci_test
+      PLATFORM_TEST_DATABASE_URL: postgresql://seo_test@127.0.0.1:55439/bizopt_ci_test
+      AUTOMATION_TEST_DATABASE_URL: postgresql://seo_test@127.0.0.1:55439/bizopt_ci_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run db:test:prepare
+      - run: npm run test:ci
+
+  security:
+    name: Production dependency audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +68,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm run test
+      - run: npm run audit:production
 
   build:
     name: Build
@@ -48,12 +84,12 @@ jobs:
 
   deploy:
     name: Deploy to Vercel
-    needs: [lint, test, build]
+    needs: [lint, test, security, build]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - use: amondnet/vercel-action@v30
+      - uses: amondnet/vercel-action@v30
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}

@@ -1,5 +1,8 @@
 import { defineConfig } from "vitest/config";
 import path from "path";
+import { requireTestDatabaseEnvironment } from "./scripts/test-database-config.mjs";
+
+if (process.env.CI === "true") requireTestDatabaseEnvironment();
 
 export default defineConfig({
   oxc: { jsx: { runtime: "automatic" } },

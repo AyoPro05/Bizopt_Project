@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { createHmac, randomUUID } from "node:crypto";
+import { disposableTestDatabase } from "@/scripts/test-database-config.mjs";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import { emitEvent } from "@/services/automation/events";
@@ -10,8 +11,8 @@ import { acceptEmailWebhook, processEmailWebhookInbox } from "@/services/notific
 import { emailHash, encryptPayload } from "@/services/notifications/crypto";
 
 // Never load app .env or use a live URL; the fixture DB must be explicitly selected.
-const testUrl = process.env.AUTOMATION_TEST_DATABASE_URL;
-const enabled = testUrl === "postgresql://seo_test@127.0.0.1:55439/bizopt_seo_test";
+const testUrl = disposableTestDatabase(process.env.AUTOMATION_TEST_DATABASE_URL);
+const enabled = !!testUrl;
 const fixtureDb = new PrismaClient({ datasourceUrl: enabled ? testUrl : "postgresql://disabled@127.0.0.1:1/disabled" });
 const suffix = randomUUID();
 const fakeIds: string[] = [];

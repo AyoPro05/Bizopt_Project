@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
+import { disposableTestDatabase } from "@/scripts/test-database-config.mjs";
 import { compare } from "bcryptjs";
 import { afterAll,beforeAll,describe,expect,it,vi } from "vitest";
 import { db } from "@/lib/db";
@@ -10,8 +11,8 @@ import { privacyRequest } from "@/services/account";
 import { processAccountExport,readAccountExport } from "@/services/account/data-export";
 import { emitEvent } from "@/services/automation/events";
 import { listPrivateNotifications,markPrivateNotification,setNotificationPreference } from "@/services/notification-access";
-const testUrl=process.env.AUTOMATION_TEST_DATABASE_URL;
-const enabled=testUrl==="postgresql://seo_test@127.0.0.1:55439/bizopt_seo_test";
+const testUrl=disposableTestDatabase(process.env.AUTOMATION_TEST_DATABASE_URL);
+const enabled=!!testUrl;
 const suffix=randomUUID(),email=`lifecycle-${suffix}@example.test`,password="Fixture-password-42";
 let userId="",orgId="",foreignOrg="",foreignUser="";
 let verification:{id:string;token:string};

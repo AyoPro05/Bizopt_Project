@@ -2,11 +2,12 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient } from "@prisma/client";
+import { disposableTestDatabase } from "@/scripts/test-database-config.mjs";
 import { createSeoSite, createSeoPlan, createSeoContent, getSeoContent, saveSeoVersion, exportSeoContent, importSeoSearch, queueSeoAudit } from "@/services/seo/workspace";
 
 // Opt in only against the disposable local database; never use the app's .env URL.
-const testUrl = process.env.SEO_TEST_DATABASE_URL;
-const enabled = !!testUrl && /^postgresql:\/\/seo_test@127\.0\.0\.1:55439\/bizopt_seo_test$/.test(testUrl);
+const testUrl = disposableTestDatabase(process.env.SEO_TEST_DATABASE_URL);
+const enabled = !!testUrl;
 const db = new PrismaClient({ datasourceUrl: enabled ? testUrl : "postgresql://disabled@127.0.0.1:1/disabled" });
 const suffix = randomUUID();
 let orgId = "";

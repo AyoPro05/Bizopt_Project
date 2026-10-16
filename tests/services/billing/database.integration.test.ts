@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
+import { disposableTestDatabase } from "@/scripts/test-database-config.mjs";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 const { provider } = vi.hoisted(() => ({ provider: { prices: { retrieve: vi.fn() }, customers: { create: vi.fn() }, subscriptions: { list: vi.fn(), retrieve: vi.fn() }, invoices: { list: vi.fn() }, checkout: { sessions: { list: vi.fn(), create: vi.fn(), expire: vi.fn() } } } }));
 vi.mock("@/lib/stripe", () => ({ stripe: provider, getPlanPriceId: () => "price_fixture_base", getTrialFeePriceId: () => "price_fixture_intro" }));
@@ -8,8 +9,8 @@ import { createCheckoutSession } from "@/services/billing/checkout";
 import { consentSnapshot } from "@/services/billing/commercial-consent";
 import { processStripeEvent } from "@/services/billing/webhook-handler";
 import { createRefund } from "@/services/billing/refunds";
-const url = process.env.AUTOMATION_TEST_DATABASE_URL;
-const enabled = url === "postgresql://seo_test@127.0.0.1:55439/bizopt_seo_test";
+const url = disposableTestDatabase(process.env.AUTOMATION_TEST_DATABASE_URL);
+const enabled = !!url;
 const suffix = randomUUID();
 let orgId = "", userId = "";
 let metadata: Record<string, string> = {};
