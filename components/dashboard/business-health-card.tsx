@@ -3,7 +3,11 @@ import { Activity } from "lucide-react";
 
 export function BusinessHealthCard({ score }: { score: number }) {
   const tone =
-    score >= 70 ? "text-emerald-600 dark:text-emerald-400" : score >= 45 ? "text-amber-600" : "text-red-600";
+    score >= 70
+      ? "text-[var(--color-success)]"
+      : score >= 45
+      ? "text-[var(--color-warning)]"
+      : "text-[var(--color-danger)]";
 
   return (
     <Card>

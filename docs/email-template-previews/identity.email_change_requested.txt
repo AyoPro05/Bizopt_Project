@@ -1,0 +1,13 @@
+Verify your new BizOpt email address
+
+Confirm this new email address before it replaces your current address.
+
+Preview: the secure link and expiry are inserted only for a real requested proof.
+
+If you did not request this action, ignore this email and contact support if needed.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Verify email: https://app.example.test/verify-email
+
+Contact support: https://app.example.test/help

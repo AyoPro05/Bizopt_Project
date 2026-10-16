@@ -18,6 +18,10 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  webpack(config) {
+    if (process.env.BIZOPT_BUILD_NO_CACHE === "true") config.cache = false;
+    return config;
+  },
   outputFileTracingRoot: path.join(process.cwd()),
   experimental: {
     serverActions: {
@@ -47,6 +51,14 @@ const nextConfig: NextConfig = {
             : []),
         ],
       },
+      ...["/verify-email", "/forgot-password", "/reset-password", "/check-email", "/api/auth/verify-email", "/notifications/unsubscribe"].map((source) => ({
+        source,
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" },
+        ],
+      })),
     ];
   },
 };

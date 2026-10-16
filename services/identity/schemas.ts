@@ -1,0 +1,11 @@
+import { z } from "zod";
+export const emailInput = z.string().trim().toLowerCase().max(254).email();
+export const passwordInput = z.string().min(8, "Use at least 8 characters.").max(72).refine(value => Buffer.byteLength(value, "utf8") <= 72, "Use no more than 72 UTF-8 bytes.");
+export const callbackInput = z.string().max(1000).optional();
+const currentPassword = z.string().min(1).max(100);
+export const registrationInput = z.object({ name: z.string().trim().min(1).max(100), email: emailInput, password: passwordInput, orgName: z.string().trim().max(100).optional(), callbackUrl: callbackInput }).strict();
+export const emailRequestInput = z.object({ email: emailInput, callbackUrl: callbackInput }).strict();
+export const proofInput = z.object({ id: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/), token: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
+export const resetInput = proofInput.extend({ password: passwordInput, confirmPassword: passwordInput }).refine(value => value.password === value.confirmPassword, { message: "Passwords must match.", path: ["confirmPassword"] });
+export const changePasswordInput = z.object({ currentPassword, password: passwordInput, confirmPassword: passwordInput }).strict().refine(value => value.password === value.confirmPassword, { message: "Passwords must match.", path: ["confirmPassword"] });
+export const changeEmailInput = z.object({ currentPassword, email: emailInput }).strict();

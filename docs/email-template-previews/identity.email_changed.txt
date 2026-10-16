@@ -1,0 +1,9 @@
+Your BizOpt email address was changed
+
+Your account email address changed. If this wasn’t you, contact support immediately.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/help
+
+Contact support: https://app.example.test/help

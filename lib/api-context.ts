@@ -6,7 +6,9 @@ import {
   requireDeviceBound,
 } from "@/lib/permissions";
 import { deviceHeadersFromRequest } from "@/lib/device";
-import { verifyAccessToken } from "@/lib/mobile-auth";
+import { validateMobileAccess } from "@/lib/mobile-auth";
+import { checkSeoMutation } from "@/lib/seo-http";
+import { db } from "@/lib/db";
 
 export type ApiContextOptions = {
   requireEntitlement?: boolean;
@@ -16,10 +18,10 @@ export type ApiContextOptions = {
 async function resolveUserId(req?: Request): Promise<string | null> {
   if (req) {
     const header = req.headers.get("authorization");
-    if (header?.startsWith("Bearer ")) {
-      const token = header.slice(7).trim();
-      const mobile = verifyAccessToken(token);
-      if (mobile) return mobile.userId;
+    if (header) {
+      if (!header.startsWith("Bearer ")) return null;
+      const mobile = await validateMobileAccess(header.slice(7).trim());
+      return mobile?.userId ?? null;
     }
   }
 
@@ -41,6 +43,13 @@ export async function getApiContext(
     return { error: "No organization" as const, status: 400 };
   }
 
+  const membership = await db.orgMember.findUnique({ where: { orgId_userId: { orgId: org.id, userId } } });
+  if (!membership || !["owner", "admin", "member"].includes(membership.role)) return { error: "Forbidden" as const, status: 403 };
+  if (req && !["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    try { checkSeoMutation(req); }
+    catch { return { error: "Request origin is not allowed" as const, status: 403 }; }
+  }
+
   if (options.requireEntitlement) {
     const entitled = await requireActiveEntitlement(org.id);
     if (!entitled) {
@@ -55,7 +64,7 @@ export async function getApiContext(
       if (!device?.fingerprint) {
         return { error: "Device fingerprint required" as const, status: 403 };
       }
-      const bound = await requireDeviceBound(org.id, device.fingerprint);
+      const bound = await requireDeviceBound(org.id, device.fingerprint, userId);
       if (!bound) {
         return { error: "Device not bound for this workspace" as const, status: 403 };
       }

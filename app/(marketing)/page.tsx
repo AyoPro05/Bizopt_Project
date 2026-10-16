@@ -100,7 +100,7 @@ export default function HomePage() {
           {features.map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
-              className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm transition hover:shadow-md"
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-card-hover)]"
             >
               <Icon className="h-8 w-8 text-[var(--color-accent)]" />
               <h3 className="mt-4 font-display text-lg font-semibold">{title}</h3>

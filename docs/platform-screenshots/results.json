@@ -1,0 +1,20 @@
+{
+  "browser": "155.0.8059.40",
+  "checks": [
+    "plan selection survives credentials sign-in and device check",
+    "account menu shows real identity and restores keyboard focus",
+    "explicit invitation preview and approval reserve one seat without sending real mail",
+    "fragment invitation accepted once by verified teammate; member billing/admin access denied",
+    "two people independently bind a device; second device for same person is blocked",
+    "consented issue report persists; workspace owner cannot read another person's private ticket",
+    "password plus MFA unlocks separate staff console; internal note stays private and public reply reaches customer",
+    "locking privileged console revokes access immediately",
+    "local recovery preference is explicit, persisted and reversible",
+    "workspace reflows at 320, 768 and 1440px in both themes; mobile navigation contains and restores focus",
+    "settings, help, support and billing fit a 320 CSS-pixel viewport (400% reflow equivalent)",
+    "workspace switch reloads the shell and uses the authorised active workspace",
+    "password-confirmed sign out everywhere invalidates the active cookie immediately",
+    "no browser runtime exceptions in the tested flows"
+  ],
+  "errors": []
+}

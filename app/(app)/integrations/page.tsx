@@ -6,6 +6,7 @@ import { getConnectedPlatformKeys } from "@/lib/platform-accounts";
 import { Card } from "@/components/ui/card";
 import { AppTopbar } from "@/components/shell/app-topbar";
 import Link from "next/link";
+import { SeoProviderSetup } from "@/components/seo/provider-setup";
 
 export default async function IntegrationsPage() {
   const session = await getServerSession(authOptions);
@@ -50,7 +51,7 @@ export default async function IntegrationsPage() {
                 </p>
               </div>
               {connected ? (
-                <span className="text-sm text-emerald-600">Connected</span>
+                <span className="text-sm text-[var(--color-success)]">Connected</span>
               ) : (
                 <Link
                   href={`/api/social/connect?platform=${p.key}`}
@@ -63,6 +64,7 @@ export default async function IntegrationsPage() {
           );
         })}
       </div>
+      <SeoProviderSetup />
     </div>
   );
 }

@@ -27,13 +27,13 @@ function signJwt(payload: Record<string, unknown>, ttlSec: number): string {
   return `${data}.${sig}`;
 }
 
-export function signAccessToken(userId: string): string {
-  return signJwt({ sub: userId, typ: "access" }, ACCESS_TTL_SEC);
+export function signAccessToken(userId: string, sessionId?: string, sessionVersion?: number): string {
+  return signJwt({ sub: userId, typ: "access", sid: sessionId, sv: sessionVersion }, ACCESS_TTL_SEC);
 }
 
 export function verifyAccessToken(
   token: string
-): { userId: string } | null {
+): { userId: string; sessionId?: string; sessionVersion?: number } | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
@@ -46,17 +46,27 @@ export function verifyAccessToken(
     const b = Buffer.from(expected);
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
+    const decodedHeader = JSON.parse(Buffer.from(header, "base64url").toString("utf8"));
+    if (decodedHeader.alg !== "HS256" || decodedHeader.typ !== "JWT") return null;
     const payload = JSON.parse(
       Buffer.from(body, "base64url").toString("utf8")
-    ) as { sub?: string; typ?: string; exp?: number };
+    ) as { sub?: string; typ?: string; exp?: number; sid?: string; sv?: number };
 
-    if (payload.typ !== "access" || !payload.sub || !payload.exp) return null;
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    if (payload.typ !== "access" || typeof payload.sub !== "string" || !payload.sub || typeof payload.exp !== "number" || !Number.isFinite(payload.exp)) return null;
+    if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
 
-    return { userId: payload.sub };
+    return { userId: payload.sub, sessionId: payload.sid, sessionVersion: payload.sv };
   } catch {
     return null;
   }
+}
+
+export async function validateMobileAccess(token: string): Promise<{ userId: string } | null> {
+  const claims = verifyAccessToken(token);
+  if (!claims?.sessionId || !Number.isSafeInteger(claims.sessionVersion)) return null;
+  const session = await db.mobileSession.findFirst({ where: { id: claims.sessionId, userId: claims.userId, sessionVersion: claims.sessionVersion, revokedAt: null, expiresAt: { gt: new Date() } }, include: { user: { select: { sessionVersion: true } } } });
+  if (!session || session.user.sessionVersion !== claims.sessionVersion) return null;
+  return { userId: claims.userId };
 }
 
 function hashRefreshToken(raw: string): string {
@@ -82,18 +92,20 @@ export async function createMobileSession(
 ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
   const refreshToken = randomBytes(32).toString("base64url");
   const refreshHash = hashRefreshToken(refreshToken);
-
-  await db.mobileSession.create({
+  const user = await db.user.findUnique({ where: { id: userId }, select: { sessionVersion: true } });
+  if (!user) throw new Error("Unauthorized");
+  const session = await db.mobileSession.create({
     data: {
       userId,
       refreshHash,
       deviceLabel,
+      sessionVersion: user.sessionVersion,
       expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
     },
   });
 
   return {
-    accessToken: signAccessToken(userId),
+    accessToken: signAccessToken(userId, session.id, user.sessionVersion),
     refreshToken,
     expiresIn: ACCESS_TTL_SEC,
   };
@@ -105,21 +117,23 @@ export async function refreshMobileSession(
   const refreshHash = hashRefreshToken(refreshToken);
   const session = await db.mobileSession.findUnique({
     where: { refreshHash },
+    include: { user: { select: { sessionVersion: true } } },
   });
 
-  if (!session || session.revokedAt || session.expiresAt < new Date()) {
+  if (!session || session.revokedAt || session.expiresAt < new Date() || session.user.sessionVersion !== session.sessionVersion) {
     return null;
   }
 
-  await db.mobileSession.update({
-    where: { id: session.id },
-    data: { lastUsedAt: new Date() },
+  const nextRefreshToken = randomBytes(32).toString("base64url");
+  const rotated = await db.mobileSession.updateMany({
+    where: { id: session.id, refreshHash, revokedAt: null },
+    data: { lastUsedAt: new Date(), refreshHash: hashRefreshToken(nextRefreshToken) },
   });
-
-  const accessToken = signAccessToken(session.userId);
+  if (!rotated.count) return null;
+  const accessToken = signAccessToken(session.userId, session.id, session.sessionVersion);
   return {
     accessToken,
-    refreshToken,
+    refreshToken: nextRefreshToken,
     expiresIn: ACCESS_TTL_SEC,
   };
 }

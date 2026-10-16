@@ -50,7 +50,7 @@ export function MediaUploader({ onUploaded }: Props) {
         <Upload className="mr-2 h-4 w-4" />
         {loading ? "Uploading…" : "Upload media"}
       </Button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-[var(--color-danger-fg)]">{error}</p>}
     </div>
   );
 }

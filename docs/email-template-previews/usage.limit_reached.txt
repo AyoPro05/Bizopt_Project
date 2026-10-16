@@ -1,0 +1,11 @@
+Your BizOpt usage limit was reached
+
+A recorded usage limit was reached. Review the current plan limits in Billing.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/billing
+
+Contact support: https://app.example.test/help
+
+Change optional email preferences: https://app.example.test/notifications/unsubscribe

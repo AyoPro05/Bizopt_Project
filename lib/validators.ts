@@ -49,6 +49,11 @@ export const publishScheduleSchema = z.object({
 });
 
 export const checkoutSchema = z.object({
+  plan: z.enum(["base", "team"]),
+  consent: z.object({
+    accepted: z.literal(true), offerVersion: z.string().max(100), termsVersion: z.string().max(100), renewalDisclosureVersion: z.string().max(100),
+    planKey: z.enum(["base", "team"]), introductoryAmountMinor: z.number().int(), introductoryDurationDays: z.number().int(), recurringAmountMinor: z.number().int(), currency: z.literal("usd"),
+  }).strict(),
   successUrl: z
     .string()
     .url()

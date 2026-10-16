@@ -2,6 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { cookieMutationOriginAllowed } from "@/lib/cookie-origin";
 
 type RateLimitRule = {
   key: string;
@@ -77,6 +78,9 @@ function applyApiRateLimit(req: NextRequest) {
 export default withAuth(
   function middleware(req: NextRequest) {
     if (req.nextUrl.pathname.startsWith("/api/")) {
+      if (!cookieMutationOriginAllowed(req, process.env.SEO_APP_ORIGIN ?? process.env.NEXTAUTH_URL)) {
+        return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
+      }
       const response = applyApiRateLimit(req);
       if (response) return response;
       return NextResponse.next();
@@ -88,10 +92,11 @@ export default withAuth(
     return NextResponse.next();
   },
   {
+    cookies: process.env.NODE_ENV === "production" ? { sessionToken: { name: "__Secure-next-auth.session-token" } } : undefined,
     pages: { signIn: "/login" },
     callbacks: {
       authorized: ({ req, token }) => {
-        if (req.nextUrl.pathname.startsWith("/api/")) return true;
+        if (req.nextUrl.pathname.startsWith("/api/") || req.nextUrl.pathname === "/notifications/unsubscribe") return true;
         return !!token;
       },
     },
@@ -114,5 +119,12 @@ export const config = {
     "/billing/:path*",
     "/devices/:path*",
     "/integrations/:path*",
+    "/seo/:path*",
+    "/workspace/:path*",
+    "/help/:path*",
+    "/support/:path*",
+    "/support-console/:path*",
+    "/notifications/:path*",
+    "/notification-delivery/:path*",
   ],
 };

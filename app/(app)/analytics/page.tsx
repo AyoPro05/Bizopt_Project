@@ -1,3 +1,4 @@
+import { AppTopbar } from "@/components/shell/app-topbar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getUserPrimaryOrg } from "@/lib/permissions";
@@ -13,6 +14,7 @@ export default async function AnalyticsPage() {
 
   return (
     <div>
+      <AppTopbar />
       <h1 className="font-display text-3xl font-semibold">Analytics</h1>
       <p className="mt-1 text-[var(--color-ink-muted)]">
         Publishing health and platform breakdown

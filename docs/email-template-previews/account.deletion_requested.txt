@@ -1,0 +1,9 @@
+Your BizOpt deletion request was received
+
+Your deletion request is awaiting review. This notice does not confirm account deletion.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/help
+
+Contact support: https://app.example.test/help

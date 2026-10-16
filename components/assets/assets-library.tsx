@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import { MediaUploader } from "@/components/media/media-uploader";
 import { EmptyState } from "@/components/empty-state";
 import { FallbackImage } from "@/components/ui/fallback-image";
@@ -53,18 +55,13 @@ export function AssetsLibrary({ initialAssets }: Props) {
         }}
       />
 
-      {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={() => void refreshAssets()}
-            className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-          >
+       {error && (
+        <Callout tone="danger" title={error} className="mt-4">
+          <Button size="sm" variant="secondary" onClick={() => void refreshAssets()}>
             Retry
-          </button>
-        </div>
-      )}
+          </Button>
+        </Callout>
+       )}
 
       {loading ? (
         <p className="mt-8 text-sm text-[var(--color-ink-muted)]">Loading assets...</p>

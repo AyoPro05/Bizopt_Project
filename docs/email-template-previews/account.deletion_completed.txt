@@ -1,0 +1,9 @@
+Your BizOpt account deletion completed
+
+Your account deletion was completed according to the reviewed deletion request.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/help
+
+Contact support: https://app.example.test/help

@@ -7,6 +7,8 @@ import { IdeaInput } from "@/components/ai/idea-input";
 import { ContentGallery, type VariantItem } from "@/components/ai/content-gallery";
 import { VariantDetail } from "@/components/ai/variant-detail";
 import { useDraftAutosaveLoop } from "@/hooks/use-draft-autosave";
+import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import Link from "next/link";
 
 export function AiStudioView() {
@@ -185,29 +187,30 @@ export function AiStudioView() {
       )}
 
       {loadError && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p>{loadError}</p>
+        <Callout tone="danger" title="Unable to load this draft" className="mt-4">
+          {loadError}
           {briefId && (
-            <button
-              type="button"
-              className="mt-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-2"
               onClick={() => void loadBrief(briefId)}
             >
               Retry
-            </button>
+            </Button>
           )}
-        </div>
+        </Callout>
       )}
 
       {error && (
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-200">
+        <Callout tone="danger" className="mt-4">
           {error}{" "}
           {error.includes("trial") && (
             <Link href="/billing" className="font-medium underline">
               Go to billing
             </Link>
           )}
-        </p>
+        </Callout>
       )}
 
       {variants.length > 0 && (

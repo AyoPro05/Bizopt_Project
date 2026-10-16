@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CircleDot, Laptop2, ShieldCheck } from "lucide-react";
+import { safeInternalDestination } from "@/lib/redirect-url";
 
 function getFingerprint(): string {
   const parts = [
@@ -18,7 +19,8 @@ function getFingerprint(): string {
 
 export default function DeviceCheckPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<"checking" | "binding" | "done" | "error">("checking");
+  const [status, setStatus] = useState<"checking" | "ready" | "binding" | "done" | "error">("checking");
+  const destination = () => safeInternalDestination(new URLSearchParams(window.location.search).get("next"), window.location.origin);
   const [message, setMessage] = useState("");
   const [sessionLabel, setSessionLabel] = useState("Current browser session");
 
@@ -50,7 +52,7 @@ export default function DeviceCheckPage() {
           throw new Error(data.error ?? "Unable to verify this session.");
         }
         if (data.bound && data.entitlementActive) {
-          router.replace("/home");
+          router.replace(destination());
           return;
         }
         if (data.bound) {
@@ -58,7 +60,7 @@ export default function DeviceCheckPage() {
           setMessage("Session recognized. Continue to billing to complete activation.");
           return;
         }
-        setStatus("binding");
+        setStatus("ready");
       } catch (err) {
         setStatus("error");
         setMessage(err instanceof Error ? err.message : "Unable to verify this session.");
@@ -88,23 +90,24 @@ export default function DeviceCheckPage() {
       return;
     }
     setStatus("done");
-    setMessage("Session authorized. Head to billing to activate your subscription.");
+    setMessage("Session authorized. You can continue to your workspace.");
+    router.replace(destination());
   }
 
   const statusBadge =
     status === "done"
       ? {
           label: "Authorized Workspace",
-          className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+          className: "bg-[var(--color-success-bg)] text-[var(--color-success-fg)] border border-[var(--color-success-border)]",
         }
       : status === "error"
       ? {
           label: "Authorization Needed",
-          className: "bg-amber-50 text-amber-700 border border-amber-200",
+          className: "bg-[var(--color-warning-bg)] text-[var(--color-warning-fg)] border border-[var(--color-warning-border)]",
         }
       : {
           label: "Verifying Session",
-          className: "bg-slate-100 text-slate-600 border border-slate-200",
+          className: "bg-[var(--color-neutral-bg)] text-[var(--color-neutral-fg)] border border-[var(--color-neutral-border)]",
         };
 
   return (
@@ -149,11 +152,11 @@ export default function DeviceCheckPage() {
             {status === "binding" ? "Authorizing..." : "Authorize this session"}
           </Button>
         )}
-        <Button variant="secondary" onClick={() => router.push("/billing")}>
+        <Button variant="secondary" onClick={() => router.push(destination().startsWith("/billing") ? destination() : "/billing")}>
           Go to billing
         </Button>
-        <Button variant="ghost" onClick={() => router.push("/home")}>
-          Skip to Home
+        <Button variant="ghost" onClick={() => router.push(destination())}>
+          Continue to workspace
         </Button>
       </div>
     </div>

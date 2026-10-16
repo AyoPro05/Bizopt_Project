@@ -1,0 +1,11 @@
+A scheduled publication was missed
+
+A scheduled publication did not complete at its expected time. Review its current status before retrying.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/calendar
+
+Contact support: https://app.example.test/help
+
+Change optional email preferences: https://app.example.test/notifications/unsubscribe

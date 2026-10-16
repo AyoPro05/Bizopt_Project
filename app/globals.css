@@ -38,6 +38,28 @@
   --color-warm: #ea580c;
   --color-danger: #dc2626;
   --color-success: #16a34a;
+  --color-info: #0284c7;
+
+  /* Status families (used by Badge, Callout, FieldError, inline banners) — light mode */
+  --color-success-bg: #dcfce7;
+  --color-success-fg: #166534;
+  --color-success-border: #bbf7d0;
+  --color-warning-bg: #ffedd5;
+  --color-warning-fg: #78350f;
+  --color-warning-border: #fed7aa;
+  --color-danger-bg: #fee2e2;
+  --color-danger-fg: #7f1d1d;
+  --color-danger-border: #fecaca;
+  --color-info-bg: #e0f2fe;
+  --color-info-fg: #075985;
+  --color-info-border: #7dd3fc;
+  --color-neutral-bg: #f1f5f9;
+  --color-neutral-fg: #334159;
+  --color-neutral-border: #e2e8f0;
+
+  /* Tooltip / popover surfaces (always high-contrast with their foreground) */
+  --color-tooltip-bg: #1e293b;
+  --color-tooltip-fg: #ffffff;
 
   /* Elevation */
   --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
@@ -60,6 +82,34 @@
   --color-accent-muted: #115e59;
   --color-nav-active-bg: #334155;
   --color-nav-active-text: #f8fafc;
+
+  /* Semantic */
+  --color-warm: #ea580c;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-info: #38bdf8;
+
+  /* Status families — dark mode */
+  --color-success-bg: #14532d;
+  --color-success-fg: #86efac;
+  --color-success-border: #166534;
+  --color-warning-bg: #78350f;
+  --color-warning-fg: #fcd34d;
+  --color-warning-border: #451a03;
+  --color-danger-bg: #7f1d1d;
+  --color-danger-fg: #fca5a5;
+  --color-danger-border: #450a0a;
+  --color-info-bg: #075985;
+  --color-info-fg: #7dd3fc;
+  --color-info-border: #0c4a6e;
+  --color-neutral-bg: #1e293b;
+  --color-neutral-fg: #94a3b8;
+  --color-neutral-border: #334155;
+
+  /* Tooltip / popover surfaces (always high-contrast with their foreground) */
+  --color-tooltip-bg: #f1f5f9;
+  --color-tooltip-fg: #0f172a;
+
   --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.2), 0 1px 3px 0 rgb(0 0 0 / 0.15);
   --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.15);
   --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);

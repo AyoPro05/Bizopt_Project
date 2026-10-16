@@ -34,7 +34,8 @@ export async function POST(req: Request) {
     org.id,
     parsed.data.oldFingerprint,
     parsed.data.newFingerprint,
-    { label: parsed.data.label, platform: parsed.data.platform }
+    { label: parsed.data.label, platform: parsed.data.platform },
+    session.user.id
   );
 
   if (!result.ok) {

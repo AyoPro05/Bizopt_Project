@@ -19,7 +19,7 @@ export function DraftAutosaveIndicator() {
   return (
     <span
       className={`text-xs ${
-        status === "error" ? "text-red-600" : "text-[var(--color-ink-muted)]"
+        status === "error" ? "text-[var(--color-danger-fg)]" : "text-[var(--color-ink-muted)]"
       }`}
       role="status"
     >

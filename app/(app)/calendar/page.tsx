@@ -1,3 +1,4 @@
+import { AppTopbar } from "@/components/shell/app-topbar";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
@@ -31,6 +32,7 @@ export default async function CalendarPage() {
 
   return (
     <div>
+      <AppTopbar />
       <h1 className="font-display text-3xl font-semibold">Calendar</h1>
       <p className="mt-1 text-[var(--color-ink-muted)]">
         All scheduled posts — always findable, no notification required

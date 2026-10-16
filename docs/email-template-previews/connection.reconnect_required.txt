@@ -1,0 +1,11 @@
+Reconnect your social account
+
+A social connection needs attention before publishing can continue.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/integrations
+
+Contact support: https://app.example.test/help
+
+Change optional email preferences: https://app.example.test/notifications/unsubscribe

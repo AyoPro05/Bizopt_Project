@@ -9,6 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "test:ci": "node scripts/run-ci-tests.mjs",
+    "db:test:prepare": "node scripts/prepare-test-database.mjs",
+    "audit:production": "npm audit --omit=dev --audit-level=moderate",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate",
@@ -22,18 +25,20 @@
     "worker:ai": "tsx workers/ai-worker.ts",
     "worker:media": "tsx workers/media-worker.ts",
     "worker:growth": "tsx workers/growth-worker.ts",
-    "worker:compliance": "tsx workers/compliance-worker.ts"
+    "worker:compliance": "tsx workers/compliance-worker.ts",
+    "worker:seo": "tsx workers/seo-worker.ts",
+    "worker:invitations": "tsx workers/invite-worker.ts"
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.7.4",
+    "@auth/prisma-adapter": "^2.11.3",
     "@prisma/client": "^6.5.0",
     "@sentry/nextjs": "^10.57.0",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.487.0",
-    "next": "^15.2.4",
-    "next-auth": "^4.24.11",
+    "next": "^15.5.28",
+    "next-auth": "^4.24.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.12.4",
@@ -50,12 +55,17 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "^15.2.4",
+    "eslint-config-next": "^15.5.28",
     "happy-dom": "^20.11.2",
     "prisma": "^6.5.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",
     "typescript": "^5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "@auth/core": "^0.41.3",
+    "next": { "postcss": "^8.5.30" },
+    "@prisma/config": { "deepmerge-ts": "^8.0.2" }
   }
 }

@@ -1,3 +1,4 @@
+import { AppTopbar } from "@/components/shell/app-topbar";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
@@ -16,7 +17,7 @@ export default async function DevicesPage() {
   if (!org) return <p>No workspace.</p>;
 
   const [devices, entitlement] = await Promise.all([
-    listDevices(org.id),
+    listDevices(org.id, session?.user?.id),
     db.entitlement.findUnique({ where: { orgId: org.id } }),
   ]);
 
@@ -25,6 +26,7 @@ export default async function DevicesPage() {
 
   return (
     <div>
+      <AppTopbar />
       <h1 className="font-display text-3xl font-semibold">Session Security</h1>
       <p className="mt-1 text-[var(--color-ink-muted)]">
         Protecting workspace automations by authorizing trusted sessions.
@@ -36,7 +38,7 @@ export default async function DevicesPage() {
             <ShieldCheck className="h-5 w-5 text-[var(--color-accent)]" />
             <p className="font-medium text-[var(--color-ink)]">Authorized Sessions</p>
           </div>
-          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
+          <span className="inline-flex items-center rounded-full border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-2.5 py-1 text-xs font-medium text-[var(--color-neutral-fg)]">
             {boundCount} of {limit} active
           </span>
         </div>
@@ -55,7 +57,7 @@ export default async function DevicesPage() {
                   </p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-2.5 py-1 text-xs font-medium text-[var(--color-warning-fg)]">
                 <CircleDot className="h-3 w-3" />
                 Pending Verification
               </span>
@@ -82,8 +84,8 @@ export default async function DevicesPage() {
                 <span
                   className={
                     d.isPrimary
-                      ? "inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700"
-                      : "inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600"
+                      ? "inline-flex items-center gap-1 rounded-full border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-2.5 py-1 text-xs font-medium text-[var(--color-success-fg)]"
+                      : "inline-flex items-center gap-1 rounded-full border border-[var(--color-neutral-border)] bg-[var(--color-neutral-bg)] px-2.5 py-1 text-xs font-medium text-[var(--color-neutral-fg)]"
                   }
                 >
                   <CircleDot className="h-3 w-3" />

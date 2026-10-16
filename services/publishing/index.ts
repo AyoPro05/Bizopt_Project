@@ -1,3 +1,4 @@
+import { emitWorkspaceOperation } from "@/services/operational-events";
 import { db } from "@/lib/db";
 import { publishToPlatform } from "@/services/platforms/publish";
 
@@ -48,10 +49,8 @@ export async function processDuePosts(limit = 10) {
   const results = [];
   for (const post of due) {
     try {
-      await db.scheduledPost.update({
-        where: { id: post.id },
-        data: { status: "publishing" },
-      });
+      const claim = await db.scheduledPost.updateMany({ where: { id: post.id, orgId: post.orgId, status: "queued" }, data: { status: "publishing" } });
+      if (!claim.count) continue;
 
       const result = await publishToPlatform(post.platform, {
         orgId: post.orgId,
@@ -59,21 +58,16 @@ export async function processDuePosts(limit = 10) {
         campaignId: post.campaignId ?? undefined,
       });
 
-      const updated = await db.scheduledPost.update({
-        where: { id: post.id },
-        data: {
-          status: result.success ? "published" : "failed",
-          publishedAt: result.success ? new Date() : null,
-          externalId: result.externalId,
-          errorMessage: result.error,
-        },
+      const updated = await db.$transaction(async tx => {
+        const row = await tx.scheduledPost.update({ where: { id: post.id }, data: { status: result.success ? "published" : "failed", publishedAt: result.success ? new Date() : null, externalId: result.externalId, errorMessage: result.success ? null : "Publishing could not be confirmed. Review the connection and post before retrying.", ...(!result.success ? { retryCount: { increment: 1 } } : {}) } });
+        if (!result.success) await emitWorkspaceOperation(tx, post.orgId, post.retryCount + 1 >= 3 ? "publishing.exhausted" : "publishing.failed", post.id, `publishing-failure:${post.id}:${post.retryCount + 1}`, { platform: post.platform, errorCode: "PUBLISH_NOT_CONFIRMED" });
+        return row;
       });
       results.push(updated);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      await db.scheduledPost.update({
-        where: { id: post.id },
-        data: { status: "failed", errorMessage: message, retryCount: { increment: 1 } },
+    } catch {
+      await db.$transaction(async tx => {
+        await tx.scheduledPost.update({ where: { id: post.id }, data: { status: "failed", errorMessage: "Publishing could not be confirmed. Check the provider before retrying.", retryCount: { increment: 1 } } });
+        await emitWorkspaceOperation(tx, post.orgId, post.retryCount + 1 >= 3 ? "publishing.exhausted" : "publishing.failed", post.id, `publishing-failure:${post.id}:${post.retryCount + 1}`, { platform: post.platform, errorCode: "PUBLISH_NOT_CONFIRMED" });
       });
     }
   }

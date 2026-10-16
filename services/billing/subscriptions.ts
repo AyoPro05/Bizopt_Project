@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
 import { BILLING } from "@/lib/constants";
 import type Stripe from "stripe";
+import type { Prisma } from "@prisma/client";
 
 export async function upsertSubscriptionFromStripe(
   orgId: string,
-  sub: Stripe.Subscription
+  sub: Stripe.Subscription,
+  client: Prisma.TransactionClient = db
 ) {
   const item = sub.items.data[0];
   const amountCents = item?.price?.unit_amount ?? BILLING.amountCents;
@@ -23,7 +25,7 @@ export async function upsertSubscriptionFromStripe(
         : sub.default_payment_method.id;
   }
 
-  return db.subscription.upsert({
+  return client.subscription.upsert({
     where: { orgId },
     create: {
       orgId,
@@ -43,10 +45,7 @@ export async function upsertSubscriptionFromStripe(
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
       currentPeriodStart: new Date(sub.current_period_start * 1000),
       currentPeriodEnd: new Date(sub.current_period_end * 1000),
-      trialConvertedAt:
-        sub.status === "active" && trialEndAt && trialEndAt < new Date()
-          ? new Date()
-          : null,
+      lastReconciledAt: new Date(),
     },
     update: {
       stripeCustomerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
@@ -61,10 +60,7 @@ export async function upsertSubscriptionFromStripe(
       canceledAt: sub.canceled_at ? new Date(sub.canceled_at * 1000) : null,
       currentPeriodStart: new Date(sub.current_period_start * 1000),
       currentPeriodEnd: new Date(sub.current_period_end * 1000),
-      trialConvertedAt:
-        sub.status === "active" && trialEndAt && trialEndAt < new Date()
-          ? new Date()
-          : undefined,
+      lastReconciledAt: new Date(),
     },
   });
 }

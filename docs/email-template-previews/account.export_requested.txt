@@ -1,0 +1,9 @@
+Your BizOpt data export was requested
+
+Your account data export was requested. Check Settings for its preparation status.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Open BizOpt: https://app.example.test/settings
+
+Contact support: https://app.example.test/help

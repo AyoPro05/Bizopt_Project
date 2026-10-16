@@ -1,33 +1,49 @@
 import { cn } from "@/lib/helpers";
 
-const styles: Record<string, string> = {
-  active: "bg-emerald-100 text-emerald-800",
-  draft: "bg-slate-100 text-slate-700",
-  scheduled: "bg-sky-100 text-sky-800",
-  published: "bg-teal-100 text-teal-800",
-  failed: "bg-red-100 text-red-800",
-  past_due: "bg-amber-100 text-amber-800",
-  canceled: "bg-slate-100 text-slate-600",
-  pending_payment: "bg-amber-50 text-amber-700",
-  trialing: "bg-emerald-100 text-emerald-800",
-  trial_ended: "bg-orange-100 text-orange-800",
-  webhook_syncing: "bg-violet-100 text-violet-800",
-  caption: "bg-teal-100 text-teal-800",
-  carousel_outline: "bg-violet-100 text-violet-800",
-  image_prompt: "bg-sky-100 text-sky-800",
-  video_idea: "bg-pink-100 text-pink-800",
-  audio_idea: "bg-amber-100 text-amber-800",
-  thread: "bg-indigo-100 text-indigo-800",
-  feature: "bg-teal-100 text-teal-800",
-  improvement: "bg-sky-100 text-sky-800",
-  fix: "bg-orange-100 text-orange-800",
-  security: "bg-red-100 text-red-800",
-  pass: "bg-emerald-100 text-emerald-800",
-  warn: "bg-amber-100 text-amber-800",
-  fail: "bg-red-100 text-red-800",
-  high: "bg-red-100 text-red-800",
-  medium: "bg-amber-100 text-amber-800",
-  low: "bg-slate-100 text-slate-600",
+type Tone = "success" | "warning" | "danger" | "info" | "neutral";
+
+const statusTone: Record<string, Tone> = {
+  active: "success",
+  published: "success",
+  pass: "success",
+  trialing: "success",
+  caption: "success",
+  feature: "success",
+  image_prompt: "success",
+  thread: "success",
+  audio_idea: "success",
+  low: "success",
+
+  draft: "warning",
+  past_due: "warning",
+  warn: "warning",
+  medium: "warning",
+  pending_payment: "warning",
+
+  failed: "danger",
+  canceled: "danger",
+  trial_ended: "danger",
+  fail: "danger",
+  high: "danger",
+  security: "danger",
+
+  scheduled: "info",
+  webhook_syncing: "info",
+  video_idea: "info",
+  improvement: "info",
+  fix: "info",
+};
+
+const toneClasses: Record<Tone, string> = {
+  success:
+    "bg-[var(--color-success-bg)] text-[var(--color-success-fg)] border border-[var(--color-success-border)]",
+  warning:
+    "bg-[var(--color-warning-bg)] text-[var(--color-warning-fg)] border border-[var(--color-warning-border)]",
+  danger:
+    "bg-[var(--color-danger-bg)] text-[var(--color-danger-fg)] border border-[var(--color-danger-border)]",
+  info: "bg-[var(--color-info-bg)] text-[var(--color-info-fg)] border border-[var(--color-info-border)]",
+  neutral:
+    "bg-[var(--color-neutral-bg)] text-[var(--color-neutral-fg)] border border-[var(--color-neutral-border)]",
 };
 
 export function Badge({
@@ -37,11 +53,12 @@ export function Badge({
   status: string;
   className?: string;
 }) {
+  const tone = statusTone[status] ?? "neutral";
   return (
     <span
       className={cn(
         "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize",
-        styles[status] ?? "bg-slate-100 text-slate-700",
+        toneClasses[tone],
         className
       )}
     >

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const result = await bindDevice(org.id, parsed.data.fingerprint, {
     label: parsed.data.label,
     platform: parsed.data.platform,
-  });
+  }, session.user.id);
 
   if (!result.ok) {
     return NextResponse.json(

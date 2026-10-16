@@ -8,3 +8,13 @@ export function isAllowedAppRedirect(url: string): boolean {
     return false;
   }
 }
+
+export function safeInternalDestination(raw: string | null, origin: string, fallback = "/ai-studio"): string {
+  if (!raw || raw.includes("\\") || raw.startsWith("//")) return fallback;
+  try {
+    const target = new URL(raw, origin);
+    if (target.origin !== new URL(origin).origin || !target.pathname.startsWith("/") || /^\/(api|login|signup|device-check)(\/|$)/.test(target.pathname)) return fallback;
+    if (Array.from(target.searchParams.keys()).some(key => /token|password|secret|authorization|session|credential|signature|code/i.test(key))) return fallback;
+    return `${target.pathname}${target.search}`;
+  } catch { return fallback; }
+}

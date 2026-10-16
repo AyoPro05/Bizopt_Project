@@ -1,0 +1,23 @@
+Your BizOpt subscription has renewed
+
+Your recurring payment was confirmed. Review your paid service period in Billing.
+
+Plan: Base
+
+Amount: $9.99.
+
+Service period starts: 2026-10-15 12:00:00 UTC.
+
+Service period ends: 2026-10-22 12:00:00 UTC.
+
+Next expected billing date: 2026-10-22 12:00:00 UTC.
+
+Recurring price: $9.99/month until canceled. Applicable tax treatment and the current total are shown in Billing and on the invoice.
+
+Review the features and actual usage limits for your plan in Billing. Provider receipts are separate from this product status notice.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Manage or cancel subscription: https://app.example.test/billing
+
+Contact support: https://app.example.test/help

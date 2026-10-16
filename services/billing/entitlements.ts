@@ -32,19 +32,6 @@ export async function upsertEntitlement(
   });
 }
 
-export async function activateTrialing(
-  orgId: string,
-  subscriptionId: string,
-  trialEnd: Date | null
-) {
-  return upsertEntitlement(orgId, {
-    subscriptionId,
-    active: true,
-    accessUntil: trialEnd,
-    userFacingState: "trialing",
-  });
-}
-
 export async function revokeEntitlement(orgId: string, state: UserFacingState = "canceled") {
   return upsertEntitlement(orgId, {
     active: false,

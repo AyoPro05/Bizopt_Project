@@ -1,0 +1,16 @@
+.workspace {
+  --seo-readable-accent: var(--color-accent-hover);
+}
+
+:global(.dark) .workspace {
+  --seo-readable-accent: var(--color-accent);
+}
+
+.workspace [class*="text-[var(--color-accent)]"] {
+  color: var(--seo-readable-accent);
+}
+
+.workspace button[class*="bg-[var(--color-accent)]"] {
+  background-color: var(--seo-readable-accent);
+  color: var(--color-surface);
+}

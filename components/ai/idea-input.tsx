@@ -1,6 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { BILLING, PLATFORMS } from "@/lib/constants";
 
 const STARTER_PROMPTS = [
@@ -85,23 +88,26 @@ export function IdeaInput({
       </div>
 
       <div>
-        <label className="text-sm font-medium">Your business idea</label>
-        <textarea
+        <Label htmlFor="idea-prompt">Your business idea</Label>
+        <Textarea
+          id="idea-prompt"
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
           rows={4}
+          ariaLabel="Your business idea"
           placeholder="Launching a spring collection — 20% off for followers who engage this week…"
-          className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
+          className="mt-2"
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="text-sm font-medium">Post goal</label>
+          <Label htmlFor="idea-goal">Post goal</Label>
           <select
+            id="idea-goal"
             value={goal}
             onChange={(e) => onGoalChange(e.target.value)}
-            className="mt-1 block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
           >
             <option value="">Select goal…</option>
             {GOALS.map((g) => (
@@ -112,11 +118,12 @@ export function IdeaInput({
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium">Tone</label>
+          <Label htmlFor="idea-tone">Tone</Label>
           <select
+            id="idea-tone"
             value={tone}
             onChange={(e) => onToneChange(e.target.value)}
-            className="mt-1 block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm text-[var(--color-ink)] focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent-soft)]"
           >
             <option value="professional">Professional</option>
             <option value="casual">Casual</option>
@@ -125,21 +132,25 @@ export function IdeaInput({
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium">Industry</label>
-          <input
+          <Label htmlFor="idea-industry">Industry</Label>
+          <Input
+            id="idea-industry"
             value={industry}
             onChange={(e) => onIndustryChange(e.target.value)}
             placeholder="e.g. SaaS, retail, agency"
-            className="mt-1 w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm"
+            ariaLabel="Industry"
+            className="mt-1"
           />
         </div>
         <div>
-          <label className="text-sm font-medium">Audience</label>
-          <input
+          <Label htmlFor="idea-audience">Audience</Label>
+          <Input
+            id="idea-audience"
             value={audience}
             onChange={(e) => onAudienceChange(e.target.value)}
             placeholder="e.g. small business owners"
-            className="mt-1 w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm"
+            ariaLabel="Audience"
+            className="mt-1"
           />
         </div>
       </div>

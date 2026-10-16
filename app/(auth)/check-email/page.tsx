@@ -1,0 +1,4 @@
+import type { Metadata } from "next";
+import { ResendVerificationForm, SignInLink } from "@/components/auth/flow-forms";
+export const metadata: Metadata = {title:"Check your email | BizOpt",referrer:"no-referrer",robots:{index:false,follow:false}};
+export default function Page(){return <div className="card-panel p-8"><h1 className="font-display text-2xl font-semibold">Check your email</h1><p className="mt-2 text-sm text-[var(--color-ink-muted)]">Your account is created and your verification email is queued. Delivery can take a few minutes. Check your inbox and spam folder, then use the confirmation button in your email.</p><p className="mt-3 text-sm text-[var(--color-ink-muted)]">Your three free preview ideas remain separate from paid introductory access. Verification does not activate a subscription.</p><ResendVerificationForm/><p className="mt-5 text-sm"><SignInLink>Sign in to continue</SignInLink></p></div>;}

@@ -3,13 +3,19 @@
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
+import { safeInternalDestination } from "@/lib/redirect-url";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [callbackQuery, setCallbackQuery] = useState("");
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("callbackUrl");
+    if (raw) setCallbackQuery(`?callbackUrl=${encodeURIComponent(safeInternalDestination(raw, window.location.origin))}`);
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,7 +48,8 @@ export default function LoginPage() {
         setError("Invalid email or password");
         return;
       }
-      router.push("/device-check?next=/ai-studio");
+      const next = safeInternalDestination(new URLSearchParams(window.location.search).get("callbackUrl"), window.location.origin);
+      router.push(`/device-check?next=${encodeURIComponent(next)}`);
     } catch {
       setError("Unable to sign in right now. Please try again.");
     } finally {
@@ -82,7 +89,7 @@ export default function LoginPage() {
             className="mt-1"
           />
           {fieldErrors.email && (
-            <p id="login-email-error" className="mt-1 text-xs text-red-700">
+            <p id="login-email-error" className="mt-1 text-xs text-[var(--color-danger-fg)]">
               {fieldErrors.email}
             </p>
           )}
@@ -104,19 +111,20 @@ export default function LoginPage() {
             className="mt-1"
           />
           {fieldErrors.password && (
-            <p id="login-password-error" className="mt-1 text-xs text-red-700">
+            <p id="login-password-error" className="mt-1 text-xs text-[var(--color-danger-fg)]">
               {fieldErrors.password}
             </p>
           )}
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <p className="text-sm"><Link href={`/forgot-password${callbackQuery}`} className="text-[var(--color-accent)] hover:underline">Forgot password?</Link></p>
+        {error && <p className="text-sm text-[var(--color-danger-fg)]">{error}</p>}
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Signing in..." : "Sign in"}
         </Button>
       </form>
       <p className="mt-6 text-center text-sm text-[var(--color-ink-muted)]">
         No account?{" "}
-        <Link href="/signup" className="text-[var(--color-accent)] hover:underline">
+        <Link href={`/signup${callbackQuery}`} className="text-[var(--color-accent)] hover:underline">
           Sign up
         </Link>
       </p>

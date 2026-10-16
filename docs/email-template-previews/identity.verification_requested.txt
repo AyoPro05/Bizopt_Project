@@ -1,0 +1,13 @@
+Verify your email to finish setting up BizOpt
+
+Thanks for creating your account. Confirm your email to finish setup.
+
+Preview: the secure link and expiry are inserted only for a real requested proof.
+
+If you did not create this account, you can ignore this email.
+
+Recorded at: 2026-10-15 12:00:00 UTC.
+
+Verify email: https://app.example.test/verify-email
+
+Contact support: https://app.example.test/help
