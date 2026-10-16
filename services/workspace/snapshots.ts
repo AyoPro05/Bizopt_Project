@@ -1,26 +1,27 @@
 import { db } from "@/lib/db";
-import { serializeWorkspaceSessionState } from "@/services/workspace/session";
+import { AppError } from "@/services/platform/errors";
+import { serializeWorkspaceSessionState, workspaceSessionWhere, type WorkspaceScope } from "@/services/workspace/session";
 
-export async function saveWorkspaceSnapshot(sessionId: string, reason = "user_saved") {
-  const session = await db.workspaceSession.findUniqueOrThrow({
-    where: { id: sessionId },
-  });
-
-  return db.workspaceSnapshot.create({
-    data: {
-      workspaceSessionId: sessionId,
-      stage: session.stage,
-      snapshotData: serializeWorkspaceSessionState(session as Record<string, unknown>),
-      reason,
-    },
+export async function saveWorkspaceSnapshot(sessionId: string, scope: WorkspaceScope, reason = "user_saved") {
+  return db.$transaction(async tx => {
+    const session = await tx.workspaceSession.findFirst({ where: workspaceSessionWhere(sessionId, scope) });
+    if (!session) throw new AppError("Session not found.", 404);
+    return tx.workspaceSnapshot.create({
+      data: {
+        workspaceSessionId: sessionId,
+        stage: session.stage,
+        snapshotData: serializeWorkspaceSessionState(session),
+        reason,
+      },
+    });
   });
 }
 
-export async function getSnapshotHistory(sessionId: string, limit = 20) {
+export async function getSnapshotHistory(sessionId: string, scope: WorkspaceScope, limit = 20) {
   return db.workspaceSnapshot.findMany({
-    where: { workspaceSessionId: sessionId },
+    where: { workspaceSessionId: sessionId, session: workspaceSessionWhere(sessionId, scope) },
     orderBy: { takenAt: "desc" },
-    take: limit,
+    take: Math.min(100, Math.max(1, limit)),
     select: {
       id: true,
       stage: true,
@@ -30,8 +31,10 @@ export async function getSnapshotHistory(sessionId: string, limit = 20) {
   });
 }
 
-export async function getSnapshot(snapshotId: string) {
-  return db.workspaceSnapshot.findUniqueOrThrow({
-    where: { id: snapshotId },
+export async function getSnapshot(snapshotId: string, sessionId: string, scope: WorkspaceScope) {
+  const snapshot = await db.workspaceSnapshot.findFirst({
+    where: { id: snapshotId, workspaceSessionId: sessionId, session: workspaceSessionWhere(sessionId, scope) },
   });
+  if (!snapshot) throw new AppError("Snapshot not found.", 404);
+  return snapshot;
 }

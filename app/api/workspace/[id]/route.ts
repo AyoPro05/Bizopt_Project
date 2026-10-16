@@ -1,54 +1,23 @@
-import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
-import { getUserPrimaryOrg } from "@/lib/permissions";
+import { NextResponse } from "next/server";
+import { getPlatformContext } from "@/lib/platform-context";
+import { mutationGuard, readJson, platformError } from "@/lib/platform-http";
 import { getWorkspaceSession, updateWorkspaceSession } from "@/services/workspace/session";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+type RouteContext = { params: Promise<{ id: string }> };
+const headers = { "Cache-Control": "private, no-store" };
 
-  const org = await getUserPrimaryOrg(session.user.id);
-  if (!org) {
-    return NextResponse.json({ error: "No org" }, { status: 400 });
-  }
-
-  const { id } = await params;
-  const workspaceSession = await getWorkspaceSession(id);
-
-  if (!workspaceSession || workspaceSession.orgId !== org.id) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
-  return NextResponse.json(workspaceSession);
+export async function GET(req: Request, { params }: RouteContext) {
+  try {
+    const ctx = await getPlatformContext(req);
+    return NextResponse.json(await getWorkspaceSession((await params).id, { orgId: ctx.org.id, userId: ctx.userId }), { headers });
+  } catch (error) { return platformError(error); }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const org = await getUserPrimaryOrg(session.user.id);
-  if (!org) {
-    return NextResponse.json({ error: "No org" }, { status: 400 });
-  }
-
-  const { id } = await params;
-  const body = await req.json();
-  const updated = await updateWorkspaceSession(id, body);
-
-  if (updated.orgId !== org.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  return NextResponse.json(updated);
+export async function PATCH(req: Request, { params }: RouteContext) {
+  try {
+    mutationGuard(req);
+    const ctx = await getPlatformContext(req, "content.write");
+    const updated = await updateWorkspaceSession((await params).id, await readJson(req, 32768), { orgId: ctx.org.id, userId: ctx.userId });
+    return NextResponse.json(updated, { headers });
+  } catch (error) { return platformError(error); }
 }

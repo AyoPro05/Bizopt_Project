@@ -1,31 +1,15 @@
-import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
-import { getUserPrimaryOrg } from "@/lib/permissions";
+import { NextResponse } from "next/server";
+import { getPlatformContext } from "@/lib/platform-context";
+import { mutationGuard, readJson, platformError } from "@/lib/platform-http";
 import { transitionStage } from "@/services/workspace/session";
+import { workspaceCompletionSchema } from "@/services/workspace/schemas";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const org = await getUserPrimaryOrg(session.user.id);
-  if (!org) {
-    return NextResponse.json({ error: "No org" }, { status: 400 });
-  }
-
-  const { id } = await params;
-  const body = await req.json();
-  const { nextStage, updates } = body;
-
-  const updated = await transitionStage(id, nextStage, updates);
-  if (updated.orgId !== org.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  return NextResponse.json(updated);
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    mutationGuard(req);
+    const ctx = await getPlatformContext(req, "content.write");
+    const input = workspaceCompletionSchema.parse(await readJson(req, 32768));
+    const updated = await transitionStage((await params).id, input.nextStage, input.updates, { orgId: ctx.org.id, userId: ctx.userId });
+    return NextResponse.json(updated, { headers: { "Cache-Control": "private, no-store" } });
+  } catch (error) { return platformError(error); }
 }

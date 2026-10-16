@@ -2,8 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { db } = vi.hoisted(() => ({
   db: {
+    $transaction: vi.fn(),
+    orgMember: { findUnique: vi.fn() },
     workspaceSession: {
       create: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       update: vi.fn(),
@@ -38,6 +41,8 @@ import { createWorkspaceSession, listResumableSessions, updateWorkspaceSession }
 describe("workspace session core flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    db.$transaction.mockImplementation(async (work: (tx: typeof db) => unknown) => work(db));
+    db.orgMember.findUnique.mockResolvedValue({ role: "owner" });
   });
 
   it("creates a session with the right initial state", async () => {
@@ -64,7 +69,7 @@ describe("workspace session core flow", () => {
   });
 
   it("updates a session and saves relevant metadata", async () => {
-    db.workspaceSession.findUniqueOrThrow.mockResolvedValue({
+    db.workspaceSession.findFirst.mockResolvedValue({
       id: "session_1",
       stage: "idea",
       ideaPrompt: "Launch a campaign",
@@ -78,14 +83,14 @@ describe("workspace session core flow", () => {
       scheduleIntent: null,
       scheduledPlatforms: [],
     });
-    db.workspaceSession.update.mockResolvedValue({ id: "session_1", stage: "generate" });
+    db.workspaceSession.update.mockResolvedValue({ id: "session_1", ideaPrompt: "Edited idea" });
 
-    await updateWorkspaceSession("session_1", { stage: "generate" }, true);
+    await updateWorkspaceSession("session_1", { ideaPrompt: "Edited idea" }, { orgId: "org_1", userId: "user_1" }, true);
 
     expect(db.workspaceSnapshot.create).toHaveBeenCalled();
     expect(db.workspaceSession.update).toHaveBeenCalledWith({
-      where: { id: "session_1" },
-      data: expect.objectContaining({ stage: "generate", lastInteractionAt: expect.any(Date) }),
+      where: expect.objectContaining({ id: "session_1", orgId: "org_1", userId: "user_1" }),
+      data: expect.objectContaining({ ideaPrompt: "Edited idea", lastInteractionAt: expect.any(Date) }),
     });
   });
 
